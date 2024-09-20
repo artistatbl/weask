@@ -18,17 +18,20 @@ export const ChatWrapper = ({
   });
 
   return (
-    <div className="relative min-h-full bg-zinc-900 flex divide-y divide-zinc-700 flex-col justify-between gap-2">
-      <div className="flex-1 text-black bg-zinc-800 justify-between flex flex-col">
-        <Messages messages={messages} />
+    <div className="relative min-h-screen bg-zinc-900 flex flex-col">
+      <div className="flex-1 overflow-hidden">
+        <div className="max-w-3xl mx-auto h-full flex flex-col">
+          <Messages messages={messages} />
+        </div>
       </div>
-
-      <ChatInput
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={handleSubmit}
-        setInput={setInput}
-      />
+      <div className="w-full max-w-3xl mx-auto p-4 bg-zinc-800">
+        <ChatInput
+          input={input}
+          handleInputChange={handleInputChange}
+          handleSubmit={handleSubmit}
+          setInput={setInput}
+        />
+      </div>
     </div>
   );
 };
