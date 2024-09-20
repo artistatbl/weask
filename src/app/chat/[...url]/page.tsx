@@ -50,14 +50,9 @@ const Page = async ({ params }: PageProps) => {
   // });
 
   return (
-    <div className="">
-
-      {/* <Sidebar/> */}
-
-
-
-      <ChatWrapper sessionId={sessionId} initialMessages={initialMessages} />
-    </div>
+    
+        <ChatWrapper sessionId={sessionId} initialMessages={initialMessages} />
+     
   );
 };
 

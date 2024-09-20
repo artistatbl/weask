@@ -9,6 +9,13 @@
   box-sizing: border-box;
 }
 
+body {
+  background: transparent;
+  /* --sb-track-color: #ffffff; */
+  /* --sb-thumb-color: #000000; */
+}
+
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -69,8 +76,5 @@
 @layer base {
   * {
     @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }

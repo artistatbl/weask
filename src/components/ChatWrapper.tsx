@@ -2,7 +2,9 @@
 
 import { Message, useChat } from "ai/react";
 import { Messages } from "./Messages";
+import Sidebar from "./global/Sidebar";
 import { ChatInput } from "./ChatInput";
+import { useState } from "react";
 
 export const ChatWrapper = ({
   sessionId,
@@ -17,20 +19,25 @@ export const ChatWrapper = ({
     initialMessages,
   });
 
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarExpanded(!isSidebarExpanded);
+
   return (
-    <div className="relative min-h-screen bg-zinc-900 flex flex-col">
-      <div className="flex-1 overflow-hidden">
-        <div className="max-w-3xl mx-auto h-full flex flex-col">
+    <div className="flex h-screen">
+      <Sidebar isExpanded={isSidebarExpanded} toggleSidebar={toggleSidebar} />
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarExpanded ? 'ml-40' : 'ml-16'}`}>
+        <div className="flex-1 text-black bg-zinc-800 overflow-y-auto">
           <Messages messages={messages} />
         </div>
-      </div>
-      <div className="w-full max-w-3xl mx-auto p-4 bg-zinc-800">
-        <ChatInput
-          input={input}
-          handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
-          setInput={setInput}
-        />
+        <div className="bg-zinc-700 p-4">
+          <ChatInput
+            input={input}
+            handleInputChange={handleInputChange}
+            handleSubmit={handleSubmit}
+            setInput={setInput}
+          />
+        </div>
       </div>
     </div>
   );

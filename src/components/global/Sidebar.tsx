@@ -1,15 +1,17 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Home, DollarSign, BookOpen } from 'lucide-react'
+import { Home, DollarSign, BookOpen, Menu } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
-const Sidebar = () => {
-  const [isExpanded, setIsExpanded] = useState(true)
-  const pathname = usePathname()
+interface SidebarProps {
+  isExpanded: boolean;
+  toggleSidebar: () => void;
+}
 
-  const toggleSidebar = () => setIsExpanded(!isExpanded)
+const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
+  const pathname = usePathname()
 
   const navItems = [
     { href: '/', icon: Home, label: 'Home' },
@@ -18,21 +20,21 @@ const Sidebar = () => {
   ]
 
   return (
-    <div className={`fixed top-16 left-0 h-screen bg-white dark:bg-zinc-800 transition-all duration-300 ${isExpanded ? 'w-64' : 'w-16'} shadow-lg`}>
+    <div className={`fixed inset-y-0 left-0 bg-zinc-900 text-white transition-all duration-300 ease-in-out ${isExpanded ? 'w-40' : 'w-16'} shadow-lg flex flex-col`}>
       <button
         onClick={toggleSidebar}
-        className="absolute -right-3 top-9 bg-white dark:bg-zinc-800 rounded-full p-1 shadow-md"
+        className={`p-2 hover:bg-gray-800 rounded-md ${isExpanded ? 'mx-4 mt-4 w-10 h-10 flex items-center justify-center' : 'mx-auto mt-4'}`}
       >
-        {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+        <Menu size={26} />
       </button>
-      <nav className="mt-8">
+      <nav className={`mt-4 ${isExpanded ? 'px-4' : 'hidden'}`}>
         <ul>
           {navItems.map((item) => (
             <li key={item.href} className="mb-2">
-              <Link href={item.href} className={`flex items-center p-2 ${pathname === item.href ? 'bg-gray-200 dark:bg-zinc-700' : ''}`}>
+              {/* <Link href={item.href} className={`flex items-center p-2 rounded-md ${pathname === item.href ? 'bg-gray-800' : 'hover:bg-gray-900'}`}>
                 <item.icon size={20} />
-                {isExpanded && <span className="ml-4">{item.label}</span>}
-              </Link>
+                <span className="ml-2 text-sm">{item.label}</span>
+              </Link> */}
             </li>
           ))}
         </ul>
