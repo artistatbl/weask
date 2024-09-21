@@ -6,6 +6,8 @@ import { cookies } from "next/headers";
 import { currentUser } from "@clerk/nextjs/server";
 import { UserProfile } from "@clerk/nextjs";
 import Sidebar from "@/components/global/Sidebar";
+// import { HomeSidebar } from "@/components/home/sidebar";
+
 
 interface PageProps {
   params: {

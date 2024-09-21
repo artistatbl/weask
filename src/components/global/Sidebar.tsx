@@ -34,7 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
       {isMobile && (
         <button
           onClick={toggleSidebar}
-          className={`fixed top-4 left-4 z-50 p-2 rounded-md text-white ${isExpanded ? 'bg-zinc-900' : 'bg-zinc-800'}`}
+          className={`fixed top-4 left-4 z-50 p-2 rounded-md text-white ${isExpanded ? 'bg-zinc-700' : 'bg-zinc-500'}`}
         >
           <Menu size={24} />
         </button>

@@ -1,8 +1,5 @@
-import { RAGChat, upstash } from "@upstash/rag-chat";
-import { redis } from "./redis";
+import { RAGChat } from "@upstash/rag-chat";
+import { ragConfig } from "./rag-config";
 
-export const ragChat = new RAGChat({
-  model: upstash("meta-llama/Meta-Llama-3-8B-Instruct"),
-  redis: redis,
-});
+export const ragChat = new RAGChat(ragConfig as any);
 

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Bot, User } from "lucide-react";
+import { User } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 
@@ -10,49 +10,29 @@ interface MessageProps {
 
 export const Message = ({ content, isUserMessage }: MessageProps) => {
   const { user } = useUser();
-  const userName = user 
-    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || "User" 
-    : "User";
   const userAvatarUrl = user?.imageUrl;
 
   return (
-    <div
-      className={cn({
-        "bg-zinc-800": isUserMessage,
-        "bg-zinc-900/25": !isUserMessage,
-      })}
-    >
-      <div className="p-6">
-        <div className="max-w-3xl mx-auto flex items-start gap-2.5">
-          <div
-            className={cn(
-              "size-8 shrink-0 aspect-square rounded-full border border-zinc-700 bg-zinc-900 flex justify-center items-center overflow-hidden",
-              {
-                "bg-blue-950 border-blue-700": isUserMessage,
-              }
-            )}
-          >
-            {isUserMessage ? (
-              userAvatarUrl ? (
-                <Image src={userAvatarUrl} alt={userName} width={30} height={30} />
+    <div className="mb-2">
+      <div className={cn(
+        "px-2 pt-3 pb-2 rounded-lg text-sm max-w-[80%] inline-flex items-start text-white relative",
+        {
+          "bg-zinc-950": isUserMessage,
+          "bg-zinc-900": !isUserMessage
+        }
+      )}>
+        {isUserMessage && (
+          <div className="absolute left-2 top-2">
+            <div className="size-6 rounded-full border border-zinc-600 bg-blue-950 flex justify-center items-center overflow-hidden">
+              {userAvatarUrl ? (
+                <Image src={userAvatarUrl} alt="User" width={24} height={24} />
               ) : (
-                <User className="size-4 text-zinc-200" />
-              )
-            ) : (
-              <Bot className="size-4 text-white" />
-            )}
-          </div>
-
-          <div className="flex flex-col ml-4 w-full">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-semibold text-white dark:text-white">
-                {isUserMessage ? userName : "Website"}
-              </span>
+                <User className="size-3 text-zinc-200" />
+              )}
             </div>
-
-            <p className="text-sm font-normal py-2.5 text-white dark:text-white">{content}</p>
           </div>
-        </div>
+        )}
+        <div className={cn("", { "ml-8": isUserMessage })}>{content}</div>
       </div>
     </div>
   );
