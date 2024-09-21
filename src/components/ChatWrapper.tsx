@@ -43,18 +43,18 @@ export const ChatWrapper = ({
   }, [messages]);
 
   return (
-    <div className="flex h-screen">
-      {/* <HomeSidebar /> */}
+    <div className="flex h-screen w-full">
+      <HomeSidebar />
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 w-1/2">
           <div className="bg-zinc-800 p-4 flex justify-end">
-            <UserButton afterSignOutUrl="/" />
+            {/* <UserButton afterSignOutUrl="/" /> */}
           </div>
           <div className="flex-1 overflow-y-auto bg-zinc-800">
             <Messages messages={messages} />
             <div ref={messagesEndRef} />
           </div>
-          <div className="bg-zinc-700 p-4 absolute bottom-0 left-0 right-0">
+          <div className="bg-zinc-700 p-4 sticky bottom-0 left-0 right-0">
             <ChatInput
               input={input}
               handleInputChange={handleInputChange}
@@ -66,7 +66,7 @@ export const ChatWrapper = ({
             />
           </div>
         </div>
-        <div className="w-1/2 border-l">
+        <div className="w-1/2 border-l min-w-0">
           <WebsitePreview url={websiteUrl} />
         </div>
       </div>
