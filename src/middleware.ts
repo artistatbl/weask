@@ -18,7 +18,7 @@ const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', '/' ,]
 // {{ edit_2 }} Combine clerkMiddleware with route protection
 export default clerkMiddleware( async (auth, req) => {
   if (!auth().userId && !isPublicRoute(req)) {
-    console.log("User is not authenticated");
+    // console.log("User is not authenticated");
    
     // Protect routes that are not public
     // auth().protect(); 

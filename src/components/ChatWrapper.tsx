@@ -26,7 +26,7 @@ export const ChatWrapper = ({
   return (
     <div className="flex h-screen">
       <Sidebar isExpanded={isSidebarExpanded} toggleSidebar={toggleSidebar} />
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarExpanded ? 'ml-40' : 'ml-16'}`}>
+      <div className="flex-1 flex flex-col">
         <div className="flex-1 text-black bg-zinc-800 overflow-y-auto">
           <Messages messages={messages} />
         </div>

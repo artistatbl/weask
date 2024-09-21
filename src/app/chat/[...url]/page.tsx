@@ -20,7 +20,7 @@ function reconstructUrl({ url }: { url: string[] }) {
 
 const Page = async ({ params }: PageProps) => {
   const user = await currentUser();
-  console.log(user);
+  // console.log(user);
   if (!user) {
     // Redirect to login if user is not authenticated
     return <div>Please log in to access this page.</div>;
