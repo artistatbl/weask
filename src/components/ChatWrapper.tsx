@@ -24,12 +24,15 @@ export const ChatWrapper = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const params = useParams();
-  const websiteUrl = params && Array.isArray(params.url) ? decodeURIComponent(params.url.join('/')) : '';
+  const [websiteUrl, setWebsiteUrl] = useState('');
 
   useEffect(() => {
-    console.log("Params:", params);
-    console.log("Website URL:", websiteUrl);
-  }, [params, websiteUrl]);
+    if (params && Array.isArray(params.url)) {
+      const decodedUrl = decodeURIComponent(params.url.join('/'));
+      setWebsiteUrl(decodedUrl);
+      console.log("Website URL:", decodedUrl);
+    }
+  }, [params]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -41,7 +44,7 @@ export const ChatWrapper = ({
 
   return (
     <div className="flex h-screen">
-      <HomeSidebar />
+      {/* <HomeSidebar /> */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col">
           <div className="bg-zinc-800 p-4 flex justify-end">
@@ -63,11 +66,9 @@ export const ChatWrapper = ({
             />
           </div>
         </div>
-        {websiteUrl && (
-          <div className="w-1/2 border-l">
-            <WebsitePreview url={websiteUrl} />
-          </div>
-        )}
+        <div className="w-1/2 border-l">
+          <WebsitePreview url={websiteUrl} />
+        </div>
       </div>
     </div>
   );
