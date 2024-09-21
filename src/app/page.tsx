@@ -12,11 +12,17 @@ export default function Home() {
   return (
     <main className="flex flex-col min-h-screen bg-white dark:bg-neutral-950">
       <Navbar />
-      <div className="flex flex-grow">
-        {/* <HomeSidebar /> */}
-        <div className="flex-grow">
-          <section className="flex flex-col items-center justify-center px-4 py-12 sm:py-16 lg:py-20">
+     
+     
+      <section className="h-screen w-full bg-white dark:bg-neutral-950 !overflow-visible relative flex flex-col items-center antialiased bg-white dark:bg-neutral">
+        {/* <div className="absolute inset-0  h-full w-full items-center px-5 py-32"></div> */}
+
+        <div className="relative flex h-full  w-full  mt-1 flex-col items-center justify-center">
+
+
             <div className="text-center max-w-4xl mx-auto">
+
+
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-t from-zinc-900 to-main mb-4">
                 Chat with Any Website Instantly
               </h1>
@@ -25,9 +31,11 @@ export default function Home() {
               </p>
               <UrlForm />
             </div>
+            </div>
+          
+       
           </section>
-        </div>
-      </div>
+       
       <Footer />
     </main>
   );
