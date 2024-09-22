@@ -59,7 +59,7 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
       <iframe 
         src={url} 
         title="Website Preview" 
-        className="w-full h-full border-0" 
+        className="w-full h-full border-0 website-preview" 
         onLoad={handleIframeLoad}
         style={{ visibility: isLoading ? 'hidden' : 'visible' }}
       />

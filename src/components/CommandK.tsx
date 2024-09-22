@@ -60,7 +60,7 @@ export function CommandK() {
   return (
     <>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <div className="flex flex-col space-y-4 p-4">
+        <div className="flex flex-col space-y-4 p-4 ">
           <h2 className="text-lg font-semibold">Chat with a Website</h2>
           <CommandUrlForm onSubmit={handleSubmit} initialUrl={url} />
         </div>

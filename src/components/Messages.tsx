@@ -7,7 +7,7 @@ interface MessagesProps {
 
 export const Messages = ({ messages }: MessagesProps) => {
   return (
-    <div className="flex flex-col space-y-4 p-4">
+    <div className="flex flex-col space-y-4 p-4 ai-response">
       {messages.map((message, index) => (
         <Message
           key={index}

@@ -13,7 +13,7 @@ export const Message = ({ content, isUserMessage }: MessageProps) => {
   const userAvatarUrl = user?.imageUrl;
 
   return (
-    <div className="flex justify-center mb-2">
+    <div className="flex justify-center mb-2 ">
       <div className="w-full max-w-2xl px-4">
         <div className={cn(
           "px-2 pt-3 pb-2 rounded-lg text-sm max-w-[80%] inline-flex items-start text-white relative",

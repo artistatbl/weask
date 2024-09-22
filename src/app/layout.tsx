@@ -8,6 +8,11 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster"
 import { CommandK } from "@/components/CommandK";
+import dynamic from 'next/dynamic';
+
+const OnboardingTour = dynamic(() => import('@/components/OnboardingTour').then(mod => mod.OnboardingTour), {
+  ssr: false,
+});
 
 const dmSans = DM_Sans({ subsets: ['latin'] })
 
@@ -28,9 +33,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={cn(dmSans.className, "min-h-screen antialiased font-serif")}>
         <Providers>
-          <main className="h-screen text-foreground bg-white">
+          <main className="h-screen text-foreground bg-white command-k-hint">
             {children}
             <CommandK />
+            <OnboardingTour />
           </main>
           <Toaster />
         </Providers>
