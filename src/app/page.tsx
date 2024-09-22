@@ -14,7 +14,7 @@ export default function Home() {
       <Navbar />
      
      
-      <section className="h-screen w-full bg-white dark:bg-neutral-950 !overflow-visible relative flex flex-col items-center antialiased bg-white dark:bg-neutral">
+      <section className="h-screen w-full  dark:bg-neutral-950 !overflow-visible relative flex flex-col items-center antialiased bg-white dark:bg-neutral">
         {/* <div className="absolute inset-0  h-full w-full items-center px-5 py-32"></div> */}
 
         <div className="relative flex h-full  w-full  mt-1 flex-col items-center justify-center">

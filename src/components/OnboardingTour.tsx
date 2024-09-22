@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
+import Joyride, { Step, CallBackProps, STATUS, EVENTS } from 'react-joyride';
 
 const steps: Step[] = [
   {
@@ -70,14 +70,37 @@ function OnboardingTourComponent() {
     
     console.log('Joyride callback:', { status, index, type, action });
 
-    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+    if ([(STATUS.FINISHED as string), (STATUS.SKIPPED as string)].includes(status as string)) {
       console.log('Tour finished or skipped');
-      setRun(false);
-      localStorage.setItem('hasSeenChatTour', 'true');
-    } else if (type === 'step:after' || type === 'error:target_not_found') {
-      console.log('Moving to next step');
-      setStepIndex(prevIndex => Math.min(prevIndex + 1, validSteps.length - 1));
+      endTour();
+    } else if (type === EVENTS.STEP_AFTER) {
+      if (action === 'next') {
+        const nextIndex = index + 1;
+        if (nextIndex < validSteps.length) {
+          setStepIndex(nextIndex);
+        } else {
+          endTour();
+        }
+      } else if (action === 'prev') {
+        setStepIndex(prevIndex => Math.max(prevIndex - 1, 0));
+      }
+    } else if (type === EVENTS.TARGET_NOT_FOUND) {
+      const nextIndex = index + 1;
+      if (nextIndex < validSteps.length) {
+        setStepIndex(nextIndex);
+      } else {
+        endTour();
+      }
     }
+
+    if (action === 'close' || type === EVENTS.TOUR_END) {
+      endTour();
+    }
+  };
+
+  const endTour = () => {
+    setRun(false);
+    localStorage.setItem('hasSeenChatTour', 'true');
   };
 
   console.log('Rendering Joyride with run:', run, 'and stepIndex:', stepIndex);
@@ -97,8 +120,8 @@ function OnboardingTourComponent() {
         },
       }}
       callback={handleJoyrideCallback}
-      disableOverlayClose
-      disableCloseOnEsc
+      disableOverlayClose={false}
+      disableCloseOnEsc={false}
     />
   );
 }
