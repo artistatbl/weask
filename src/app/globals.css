@@ -43,6 +43,7 @@ body {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    --skeleton-bg: 240 5% 26%; /* This is the HSL value for zinc-700 */
   }
 
   .dark {
@@ -70,6 +71,7 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --skeleton-bg: 240 5% 26%; /* Same value for dark mode, adjust if needed */
   }
 }
 
@@ -77,4 +79,51 @@ body {
   * {
     @apply border-border;
   }
+}
+
+/* Styles for react-resizable-panels */
+.ResizeHandleOuter {
+  flex: 0 0 4px;
+  position: relative;
+  outline: none;
+  --background-color: transparent;
+}
+
+.ResizeHandleOuter[data-resize-handle-active] {
+  --background-color: var(--color-solid-resize-bar-handle);
+}
+
+.ResizeHandleInner {
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  right: 0.25rem;
+  border-radius: 0.25rem;
+  background-color: var(--background-color);
+  transition: background-color 0.2s linear;
+}
+
+[data-panel-group-direction="vertical"] > .ResizeHandleOuter {
+  height: 10px;
+  width: 100%;
+}
+
+[data-panel-group-direction="vertical"] > .ResizeHandleOuter > .ResizeHandleInner {
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0;
+  right: 0;
+}
+
+[data-panel-group-direction="horizontal"] > .ResizeHandleOuter {
+  width: 10px;
+  height: 100%;
+}
+
+[data-panel-group-direction="horizontal"] > .ResizeHandleOuter > .ResizeHandleInner {
+  top: 0;
+  bottom: 0;
+  left: 0.25rem;
+  right: 0.25rem;
 }

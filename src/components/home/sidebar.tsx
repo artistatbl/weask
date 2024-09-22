@@ -6,62 +6,66 @@ import {
   IconBrandTabler,
   IconSettings,
   IconUserBolt,
+  IconMessage,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { UserCircle } from "lucide-react";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 export function HomeSidebar() {
-  const links = [
-    {
-      label: "Dashboard",
-      href: "#",
-      icon: (
-        <IconBrandTabler className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Profile",
-      href: "#",
-      icon: (
-        <IconUserBolt className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Settings",
-      href: "#",
-      icon: (
-        <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Logout",
-      href: "#",
-      icon: (
-        <IconArrowLeft className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-  ];
   const [open, setOpen] = useState(false);
+  const { user } = useUser();
+  const fullName = user ? `${user.firstName} ${user.lastName}` : "User Name";
+
+  // Placeholder for chat history
+  const chatHistory = [
+    { id: 1, title: "Recent Chat 1", date: "2023-04-15" },
+    { id: 2, title: "Recent Chat 2", date: "2023-04-14" },
+    { id: 3, title: "Older Chat 1", date: "2023-04-10" },
+  ];
 
   return (
     <Sidebar open={open} setOpen={setOpen}>
       <SidebarBody className="justify-between gap-6">
-        <div className="flex flex-col flex-1  overflow-y-auto overflow-x-hidden">
+        <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
           <Logo />
           <nav className="mt-6 flex flex-col gap-2">
-            {links.map((link, idx) => (
-              <SidebarLink key={idx} link={link} />
-            ))}
+            <SidebarLink
+              link={{
+                label: "New Chat",
+                href: "#",
+                icon: (
+                  <IconBrandTabler className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+                ),
+              }}
+            />
+         
+            <div className="mt-4 transition-all duration-300 ease-in-out">
+              {open && (
+                <h3 className="px-3 text-xs font-semibold text-zinc-950  font-serif tracking-wider">Recent Chats</h3>
+              )}
+              {chatHistory.map((chat) => (
+                <SidebarLink
+                  key={chat.id}
+                  link={{
+                    label: chat.title,
+                    href: `#${chat.id}`,
+                    icon: (
+                      <IconMessage className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+                    ),
+                  }}
+                />
+              ))}
+            </div>
           </nav>
         </div>
         <div>
           <SidebarLink
             link={{
-              label: "User Name",
+              label: fullName,
               href: "#",
               icon: (
-                <UserCircle className="h-6 w-6 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
+                <UserButton/>
               ),
             }}
           />
@@ -77,7 +81,7 @@ const Logo = () => {
       href="#"
       className="font-normal flex space-x-2 items-center text-sm text-black dark:text-white py-1 relative z-20"
     >
-      <div className="h-5 w-6 bg-red-900 dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <div className="h-5 w-6 bg-white dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

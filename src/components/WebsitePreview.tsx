@@ -5,6 +5,10 @@ interface WebsitePreviewProps {
   url: string;
 }
 
+const CustomSkeleton: React.FC<React.ComponentProps<typeof Skeleton>> = (props) => {
+  return <Skeleton {...props} className={`bg-zinc-600 ${props.className || ''}`} />;
+};
+
 const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -26,38 +30,27 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
   return (
     <div className="h-full relative">
       {isLoading && (
-        <div className="absolute inset-0 p-4 bg-gray-100">
+        <div className="absolute inset-0 p-4 bg-zinc-800">
           <div className="flex flex-col h-full">
-            <Skeleton className="w-full h-16 mb-4 rounded-lg" />
+            <CustomSkeleton className="w-full h-16 mb-4 rounded-lg" />
             <div className="flex flex-1">
               <div className="w-1/4 pr-4">
-                <Skeleton className="w-full h-full rounded-lg" />
+                <CustomSkeleton className="w-full h-full rounded-lg" />
               </div>
               <div className="w-3/4 flex flex-col">
-                <Skeleton className="w-3/4 h-8 mb-4 rounded-lg" />
+                <CustomSkeleton className="w-3/4 h-8 mb-4 rounded-lg" />
                 {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
-                  
+                  <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
                 ))}
-                <Skeleton className="w-full h-48 mb-4 rounded-lg" />
-
-
+                <CustomSkeleton className="w-full h-48 mb-4 rounded-lg" />
                 {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
+                  <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
                 ))}
-                <Skeleton className="w-full h-48 mb-4 rounded-lg" />
-                {/* {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
-                ))}
-            
-                <Skeleton className="w-full h-48 mb-4 rounded-lg" />
-
+                <CustomSkeleton className="w-full h-48 mb-4 rounded-lg" />
                 {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
-                ))} */}
-                
-
-
+                  <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
+                ))}
+                <CustomSkeleton className="w-full h-48 mb-4 rounded-lg" />
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { UserButton } from "@clerk/nextjs";
 import WebsitePreview from './WebsitePreview';
 import { useParams } from 'next/navigation';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 export const ChatWrapper = ({
   sessionId,
@@ -45,31 +46,36 @@ export const ChatWrapper = ({
   return (
     <div className="flex h-screen w-full">
       <HomeSidebar />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col min-w-0 w-1/2">
-          <div className="bg-zinc-800 p-4 flex justify-end">
-            {/* <UserButton afterSignOutUrl="/" /> */}
+      <PanelGroup direction="horizontal" className="flex-1">
+        <Panel defaultSize={50} minSize={30}>
+          <div className="flex flex-col h-full">
+            <div className="bg-zinc-800 p-4 flex justify-end">
+              {/* <UserButton afterSignOutUrl="/" /> */}
+            </div>
+            <div className="flex-1 overflow-y-auto bg-zinc-800">
+              <Messages messages={messages} />
+              <div ref={messagesEndRef} />
+            </div>
+            <div className="bg-zinc-700 p-4 sticky bottom-0 left-0 right-0">
+              <ChatInput
+                input={input}
+                handleInputChange={handleInputChange}
+                handleSubmit={(e) => {
+                  handleSubmit(e);
+                  setTimeout(scrollToBottom, 100);
+                }}
+                setInput={setInput}
+              />
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto bg-zinc-800">
-            <Messages messages={messages} />
-            <div ref={messagesEndRef} />
-          </div>
-          <div className="bg-zinc-700 p-4 sticky bottom-0 left-0 right-0">
-            <ChatInput
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={(e) => {
-                handleSubmit(e);
-                setTimeout(scrollToBottom, 100);
-              }}
-              setInput={setInput}
-            />
-          </div>
-        </div>
-        <div className="w-1/2 border-l min-w-0">
+        </Panel>
+        <PanelResizeHandle className="ResizeHandleOuter">
+          <div className="ResizeHandleInner" />
+        </PanelResizeHandle>
+        <Panel defaultSize={50} minSize={30}>
           <WebsitePreview url={websiteUrl} />
-        </div>
-      </div>
+        </Panel>
+      </PanelGroup>
     </div>
   );
 };

@@ -41,11 +41,13 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput }: 
               <Button
                 size="sm"
                 type="submit"
-                className="absolute z-10 border border-border bg-zinc-800 right-2 bottom-2"
+                className="absolute z-10 border-2 border-black bg-gray-200 right-2 bottom-2"
               >
                 <Send className="size-4" />
               </Button>
             </form>
+
+            <h1 className="text-center pt-2 text-gray-400 font-light text-xs">NectLink can make mistakes. Check important info. </h1>
           </div>
         </div>
       </div>
