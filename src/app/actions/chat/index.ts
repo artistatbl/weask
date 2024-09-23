@@ -2,6 +2,7 @@
 import db from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { Message } from '../../../utils/types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const fetchChatMessages = async (sessionId: string) => {
   const user = await currentUser();
@@ -26,7 +27,15 @@ export const fetchChatMessages = async (sessionId: string) => {
       },
     });
 
-    return { status: 200, messages };
+    // Convert the database messages to the Message type
+    const typedMessages: Message[] = messages.map(msg => ({
+      id: msg.id.toString(),  // Convert id to string
+      role: msg.role as 'user' | 'assistant' | 'system',  // Type assertion
+      content: msg.content,
+      createdAt: msg.createdAt
+    }));
+
+    return { status: 200, messages: typedMessages };
   } catch (error: any) {
     console.error("Error fetching messages:", error);
     return { status: 400, message: error.message, messages: [] };
@@ -44,6 +53,11 @@ export const saveChatMessage = async (sessionId: string, message: Message) => {
 
     if (!dbUser) {
       return { status: 404, message: "User not found in database" };
+    }
+
+    // Ensure the role is valid
+    if (message.role !== 'user' && message.role !== 'assistant' && message.role !== 'system') {
+      throw new Error('Invalid message role');
     }
 
     await db.chatMessage.create({

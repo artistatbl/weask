@@ -9,9 +9,10 @@ import WebsitePreview from './WebsitePreview';
 import { useParams } from 'next/navigation';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { FC } from 'react';
-import { Message } from '@/types';
+import { Message } from '@/utils/types'
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveChatMessage } from "@/app/actions/chat";
+import { v4 as uuidv4 } from 'uuid';
 
 interface ChatWrapperProps {
   sessionId: string;
@@ -22,13 +23,12 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
   const { messages, handleInputChange, handleSubmit, input, setInput } = useChat({
     api: "/api/chat-stream",
     body: { sessionId },
-    initialMessages,
+    initialMessages: initialMessages.map(msg => ({ ...msg, id: msg.id.toString() })),
     onFinish: async (message) => {
-      await saveChatMessage(sessionId, message as Message);
+      await saveChatMessage(sessionId, { ...message, id: message.id || uuidv4() } as Message);
     },
   });
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const params = useParams();
   const [websiteUrl, setWebsiteUrl] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -37,7 +37,6 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
     if (params && Array.isArray(params.url)) {
       const decodedUrl = decodeURIComponent(params.url.join('/'));
       setWebsiteUrl(decodedUrl);
-      console.log("Website URL:", decodedUrl);
     }
   }, [params]);
 
@@ -63,7 +62,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
             <div className="bg-zinc-800 p-4 flex justify-end">
             </div>
             <ScrollArea ref={scrollAreaRef} className="flex-1 h-[calc(100vh-8rem)] bg-zinc-800">
-              <div className="p-4">
+              <div className="p-2 mb-32">
                 <Messages messages={messages} />
               </div>
             </ScrollArea>

@@ -6,6 +6,7 @@ import { fetchChatMessages, saveSearchHistory } from "@/app/actions/chat";
 import { RedirectToSignIn } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
 import { ragChat } from "@/lib/rag-chat"; 
+import { Message } from "@/utils/types";
 
 interface PageProps {
   params: {
@@ -31,10 +32,21 @@ const Page = async ({ params }: PageProps) => {
   const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl);
 
   // Fetch chat history from the database
-  const initialMessages = await prisma.chatMessage.findMany({
-    where: { sessionId }, // Ensure userId is an integer
+  const dbMessages = await prisma.chatMessage.findMany({
+    where: { 
+      sessionId,
+      
+    },
     orderBy: { createdAt: 'asc' },
   });
+
+  // Convert database messages to the expected Message type
+  const initialMessages: Message[] = dbMessages.map(msg => ({
+    id: msg.id.toString(),
+    role: msg.role as 'user' | 'assistant' | 'system',
+    content: msg.content,
+    createdAt: msg.createdAt
+  }));
 
   console.log("Fetched messages:", initialMessages.length);
 
