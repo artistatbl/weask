@@ -1,13 +1,11 @@
 import { ChatWrapper } from "@/components/ChatWrapper";
-import { ragChat } from "@/lib/rag-chat";
 import { redis } from "@/lib/redis";
 import { cookies } from "next/headers";
-// import { supabase } from "@/lib/supabase";
 import { currentUser } from "@clerk/nextjs/server";
-import { UserProfile } from "@clerk/nextjs";
-import Sidebar from "@/components/global/Sidebar";
-// import { HomeSidebar } from "@/components/home/sidebar";
-
+import { fetchChatMessages, saveSearchHistory } from "@/app/actions/chat";
+import { RedirectToSignIn } from "@clerk/nextjs";
+import { prisma } from "@/lib/prisma";
+import { ragChat } from "@/lib/rag-chat"; 
 
 interface PageProps {
   params: {
@@ -22,10 +20,8 @@ function reconstructUrl({ url }: { url: string[] }) {
 
 const Page = async ({ params }: PageProps) => {
   const user = await currentUser();
-  // console.log(user);
   if (!user) {
-    // Redirect to login if user is not authenticated
-    return <div>Please log in to access this page.</div>;
+    return <RedirectToSignIn />;
   }
 
   const sessionCookie = cookies().get("sessionId")?.value;
@@ -33,7 +29,14 @@ const Page = async ({ params }: PageProps) => {
   const sessionId = (reconstructedUrl + "--" + sessionCookie).replace(/\//g, "");
 
   const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl);
-  const initialMessages = await ragChat.history.getMessages({ amount: 10, sessionId });
+
+  // Fetch chat history from the database
+  const initialMessages = await prisma.chatMessage.findMany({
+    where: { sessionId }, // Ensure userId is an integer
+    orderBy: { createdAt: 'asc' },
+  });
+
+  console.log("Fetched messages:", initialMessages.length);
 
   if (!isAlreadyIndexed) {
     await ragChat.context.add({
@@ -44,21 +47,10 @@ const Page = async ({ params }: PageProps) => {
     await redis.sadd("indexed-urls", reconstructedUrl);
   }
 
-  // Store user search history in Supabase
-  // await supabase.from('search_history').insert({
-  //   user_id: user.id,
-  //   url: reconstructedUrl,
-  //   session_id: sessionId,
-  // });
+  await saveSearchHistory(reconstructedUrl, sessionId);
 
   return (
-    
- 
-
-
-      <ChatWrapper sessionId={sessionId} initialMessages={initialMessages} />
-  
-     
+    <ChatWrapper sessionId={sessionId} initialMessages={initialMessages} />
   );
 };
 

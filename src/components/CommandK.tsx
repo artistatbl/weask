@@ -72,10 +72,10 @@ export function CommandK() {
         <CommandList>
           <CommandEmpty>No previous chats found.</CommandEmpty>
           <CommandGroup heading="Recent Chats">
-            <CommandItem onSelect={() => handleSubmit('https://bugify.vercel.app/')}>
+            {/* <CommandItem onSelect={() => handleSubmit('https://bugify.vercel.app/')}>
               <Globe className="mr-2 h-4 w-4" />
               <span>Bugify.com</span>
-            </CommandItem>
+            </CommandItem> */}
             {/* Add more recent chats here */}
           </CommandGroup>
         </CommandList>

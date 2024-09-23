@@ -1,8 +1,8 @@
-import { upstash } from "@upstash/rag-chat";
+import { upstash, openai } from "@upstash/rag-chat";
 import { redis } from "./redis";
 
 export const ragConfig = {
-  model: upstash("meta-llama/Meta-Llama-3-8B-Instruct"),
+  model: openai("gpt-4-turbo"),
   redis: redis,
   retrievalOptions: {
     topK: 3, // Reduce from 5 to 3 to limit context size

@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-js"
+ 
+
 }
 
 datasource db {
@@ -9,49 +11,51 @@ datasource db {
 }
 
 model user {
-  id                Int      @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   createdtime      DateTime @default(now())
-  email             String   @unique
-  firstname         String?
-  lastname          String?
-  gender            String?
-  profileimageurl String?
-  clerkId           String   @unique
-  subscription      String?
+  email            String   @unique
+  firstname        String?
+  lastname         String?
+  gender           String?
+  profileimageurl  String?
+  clerkId          String   @unique
+  subscription     String?
+  chatMessages     ChatMessage[]
+  searchHistories  SearchHistory[]
 }
 
 model payments {
   id               Int      @id @default(autoincrement())
-  createdtime     DateTime @default(now())
-  stripeid        String
+  createdtime      DateTime @default(now())
+  stripeid         String
   email            String
   amount           String
-  paymenttime     String
-  paymentdate     String
+  paymenttime      String
+  paymentdate      String
   currency         String
   clerkId          String
-  customerdetails String
-  paymentintent   String
+  customerdetails  String
+  paymentintent    String
 }
 
 model subscriptions {
   id                        Int      @id @default(autoincrement())
-  createdtime              DateTime @default(now())
-  subscriptionId           String
-  stripeuserId            String
+  createdtime               DateTime @default(now())
+  subscriptionId            String   @unique
+  stripeuserId              String
   status                    String
-  startdate                String
-  enddate                  String?
-  planid                   String
-  defaultpaymentmethodid String?
+  startdate                 String
+  enddate                   String?
+  planid                    String
+  defaultpaymentmethodid    String?
   email                     String
   clerkId                   String
 }
 
 model subscriptions_plans {
   id           Int      @id @default(autoincrement())
-  createdtime DateTime @default(now())
-  planId      String
+  createdtime  DateTime @default(now())
+  planId       String
   name         String
   description  String
   amount       String
@@ -61,14 +65,32 @@ model subscriptions_plans {
 
 model invoices {
   id              Int      @id @default(autoincrement())
-  createdtime    DateTime @default(now())
-  invoiceId      String
-  subscriptionId String
-  amountPaid     String
-  amountDue      String?
+  createdtime     DateTime @default(now())
+  invoiceId       String
+  subscriptionId  String
+  amountPaid      String
+  amountDue       String?
   currency        String
   status          String
   email           String
   clerkId         String?
 }
 
+model ChatMessage {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  sessionId   String
+  role        String
+  content     String
+  userId      Int
+  user        user     @relation(fields: [userId], references: [id])
+}
+
+model SearchHistory {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  sessionId   String
+  url         String
+  userId      Int
+  user        user     @relation(fields: [userId], references: [id])
+}
