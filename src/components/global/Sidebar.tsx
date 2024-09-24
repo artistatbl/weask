@@ -74,5 +74,4 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
     </>
   )
 }
-
 export default Sidebar

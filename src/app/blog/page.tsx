@@ -17,9 +17,10 @@ interface Post {
   author: { name: string; image: any };
 }
 
-// Query to fetch all blog posts
+// Updated query to fetch all blog posts and global content
 const query = groq`
-  *[_type == "post"] | order(publishedAt desc) {
+{
+  "posts": *[_type == "post"] | order(publishedAt desc) {
     _id,
     title,
     slug,
@@ -27,11 +28,14 @@ const query = groq`
     mainImage,
     excerpt,
     "author": author->{name, image}
-  }
+  },
+  "globals": *[_type == "global"]
+}
 `;
 
 export default async function BlogPage() {
-  const posts = await client.fetch<Post[]>(query);
+  const { posts, globals } = await client.fetch<{ posts: Post[], globals: any }>(query);
+  console.log(posts, globals);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -41,7 +45,7 @@ export default async function BlogPage() {
           <h1 className="text-3xl font-bold mb-4 text-center">Our Blog</h1>
           <div className="w-full max-w-7xl overflow-y-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-3 gap-4">
-              {posts.map((post) => (
+              {posts.map((post: Post) => (
                 <Link href={`/blog/${post.slug.current}`} key={post._id} className="group">
                   <div className="bg-white rounded-lg border-2 border-gray-600 shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
                     {post.mainImage && (

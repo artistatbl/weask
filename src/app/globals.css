@@ -80,6 +80,11 @@ body {
     @apply border-border;
   }
 }
+body {
+  @apply bg-background text-foreground;
+}
+
+
 
 /* Styles for react-resizable-panels */
 .ResizeHandleOuter {

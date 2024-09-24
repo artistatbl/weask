@@ -21,6 +21,11 @@ const config = {
   	},
   	extend: {
   		colors: {
+
+			bg: '#E0E7F1',
+			main: '#A3E636',
+			mainAccent: '#4d80e6', // not needed for shadcn
+	
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
@@ -65,8 +70,17 @@ const config = {
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		},
+  			sm: 'calc(var(--radius) - 4px)',
+			base: '5px'
+  		
+	},
+	boxShadow: {
+	  base: '4px 4px 0px 0px rgba(0,0,0,1)',
+	},
+	fontWeight: {
+        base: '500',
+        heading: '700',
+      },
   		keyframes: {
   			'accordion-down': {
   				from: {

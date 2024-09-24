@@ -4,6 +4,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import dynamic from 'next/dynamic';
 import UrlForm from "@/components/UrlForm";
 import { HomeSidebar } from "@/components/home/sidebar";
+import Faq from "@/components/global/faq";
+import BentoCard from "@/components/global/bentoGrid"; // Corrected import statement
+import Safari from "@/components/magicui/safari";
+import { SafariDemo } from "@/components/global/safari";
 
 const Navbar = dynamic(() => import('@/components/global/navbar'), { ssr: false });
 const Footer = dynamic(() => import('@/components/global/footer'), { ssr: false });
@@ -31,10 +35,20 @@ export default function Home() {
               </p>
               <UrlForm />
             </div>
+
+
+           
             </div>
+
           
        
+
+
+            <SafariDemo />
           </section>
+       <BentoCard />
+
+          <Faq />
        
       <Footer />
     </main>
