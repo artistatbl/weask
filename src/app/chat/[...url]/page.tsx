@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { currentUser } from "@clerk/nextjs/server";
 import { fetchChatMessages, saveSearchHistory } from "@/app/actions/chat";
 import { RedirectToSignIn } from "@clerk/nextjs";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { ragChat } from "@/lib/rag-chat"; 
 import { Message } from "@/utils/types";
 
@@ -32,7 +32,7 @@ const Page = async ({ params }: PageProps) => {
   const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl);
 
   // Fetch chat history from the database
-  const dbMessages = await prisma.chatMessage.findMany({
+  const dbMessages = await db.chatMessage.findMany({
     where: { 
       sessionId,
       

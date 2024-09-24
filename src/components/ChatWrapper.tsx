@@ -13,6 +13,7 @@ import { Message } from '@/utils/types'
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveChatMessage } from "@/app/actions/chat";
 import { v4 as uuidv4 } from 'uuid';
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatWrapperProps {
   sessionId: string;
@@ -20,6 +21,7 @@ interface ChatWrapperProps {
 }
 
 export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }) => {
+  const { toast } = useToast();
   const { messages, handleInputChange, handleSubmit, input, setInput } = useChat({
     api: "/api/chat-stream",
     body: { sessionId },
@@ -27,11 +29,31 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
     onFinish: async (message) => {
       await saveChatMessage(sessionId, { ...message, id: message.id || uuidv4() } as Message);
     },
+    onError: (error) => {
+      console.error("Chat error:", error);
+      if (error.message.includes("Rate limit exceeded")) {
+        setIsRateLimited(true);
+        setRateLimitMessage(error.message);
+        toast({
+          title: "Rate Limit Exceeded",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "An error occurred while sending your message",
+          variant: "destructive",
+        });
+      }
+    },
   });
 
   const params = useParams();
   const [websiteUrl, setWebsiteUrl] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [rateLimitMessage, setRateLimitMessage] = useState('');
 
   useEffect(() => {
     if (params && Array.isArray(params.url)) {
@@ -53,6 +75,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
     }
   };
 
+
   return (
     <div className="flex h-screen w-full">
       <HomeSidebar />
@@ -64,6 +87,12 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
             <ScrollArea ref={scrollAreaRef} className="flex-1 h-[calc(100vh-8rem)] bg-zinc-800">
               <div className="p-2 mb-32">
                 <Messages messages={messages} />
+                {/* {isRateLimited && (
+                  <div className="rate-limit-message">
+                    <p>{rateLimitMessage}</p>
+                    <p>Please try again later.</p>
+                  </div>
+                )} */}
               </div>
             </ScrollArea>
             <div className="bg-zinc-700 p-4 sticky bottom-0 left-0 right-0">

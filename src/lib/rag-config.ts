@@ -1,7 +1,15 @@
 import { upstash, openai } from "@upstash/rag-chat";
 import { redis } from "./redis";
 
-export const ragConfig = {
+function getMaxTokens(query: string): number {
+  // Simple heuristic: longer queries get more tokens
+  if (query.length > 100) {
+    return 500; // More complex query
+  }
+  return 300; // Simpler query
+}
+
+export const ragConfig = (query: string) => ({
   model: openai("gpt-4-turbo"),
   redis: redis,
   retrievalOptions: {
@@ -9,7 +17,7 @@ export const ragConfig = {
     minScore: 0.7,
   },
   modelOptions: {
-    max_tokens: 300, // Limit the response length
+    max_tokens: getMaxTokens(query), // Dynamic token allocation
     temperature: 0.7,
   },
-};
+});

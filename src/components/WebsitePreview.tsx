@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Skeleton } from "@nextui-org/react";
+import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from 'lucide-react'; // Import the error icon
 
 interface WebsitePreviewProps {
   url: string;
@@ -11,20 +13,53 @@ const CustomSkeleton: React.FC<React.ComponentProps<typeof Skeleton>> = (props) 
 
 const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
+    setError(null);
 
-    return () => clearTimeout(timer);
-  }, [url]);
+    const checkEmbeddability = async () => {
+      try {
+        const response = await fetch(`/api/check-embeddability?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+
+        if (!data.embeddable) {
+          setError(data.message);
+          toast({
+            title: "Website Preview Unavailable",
+            description: "Website cannot be embedded due to Content Security Policy",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Website Preview Available",
+            description: "The website can be previewed successfully.",
+            variant: "success",
+          });
+        }
+      } catch (err) {
+        console.error("Error checking embeddability:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkEmbeddability();
+  }, [url, toast]);
 
   const handleIframeLoad = () => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
+    setIsLoading(false);
+  };
+
+  const handleIframeError = () => {
+    setError("Failed to load the website preview.");
+    toast({
+      title: "Website Preview Unavailable",
+      description: "Failed to load the website preview.",
+      variant: "destructive",
+    });
   };
 
   return (
@@ -46,23 +81,31 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
                 {[...Array(3)].map((_, i) => (
                   <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
                 ))}
-                <CustomSkeleton className="w-full h-48 mb-4 rounded-lg" />
-                {[...Array(3)].map((_, i) => (
-                  <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
-                ))}
-                <CustomSkeleton className="w-full h-48 mb-4 rounded-lg" />
               </div>
             </div>
           </div>
         </div>
       )}
-      <iframe 
-        src={url} 
-        title="Website Preview" 
-        className="w-full h-full border-0 website-preview" 
-        onLoad={handleIframeLoad}
-        style={{ visibility: isLoading ? 'hidden' : 'visible' }}
-      />
+      {error ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-800 text-white p-4 text-center">
+          <div className="flex flex-col items-center">
+            <AlertCircle className="w-20 h-20 text-red-500 mb-4" /> {/* Add the error icon */}
+            <p>{error}</p>
+            <a href={url} target="_blank" rel="noopener noreferrer" className="mt-2 text-blue-400 hover:underline block">
+              Open website in new tab
+            </a>
+          </div>
+        </div>
+      ) : (
+        <iframe 
+          src={url} 
+          title="Website Preview" 
+          className="w-full h-full border-0 website-preview" 
+          style={{ visibility: isLoading ? 'hidden' : 'visible' }}
+          onLoad={handleIframeLoad}
+          onError={handleIframeError}
+        />
+      )}
     </div>
   );
 };

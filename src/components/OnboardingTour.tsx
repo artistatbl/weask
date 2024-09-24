@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import Joyride, { Step, CallBackProps, STATUS, EVENTS } from 'react-joyride';
+import { useUser } from '@clerk/nextjs';
 
 const steps: Step[] = [
   {
@@ -39,6 +40,7 @@ const steps: Step[] = [
 ];
 
 function OnboardingTourComponent() {
+  const { isSignedIn } = useUser();
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [validSteps, setValidSteps] = useState<Step[]>([]);
@@ -51,8 +53,9 @@ function OnboardingTourComponent() {
     console.log('Current pathname:', pathname);
     console.log('Is chat page:', isChatPage);
     console.log('Has seen tour:', hasSeenTour);
+    console.log('Is signed in:', isSignedIn);
 
-    if (isChatPage && !hasSeenTour) {
+    if (isSignedIn && isChatPage && !hasSeenTour) {
       console.log('Starting tour in 2 seconds...');
       setTimeout(() => {
         const filteredSteps = steps.filter(step => 
@@ -63,7 +66,7 @@ function OnboardingTourComponent() {
         setRun(true);
       }, 2000);
     }
-  }, [pathname]);
+  }, [pathname, isSignedIn]);
 
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status, index, type, action } = data;

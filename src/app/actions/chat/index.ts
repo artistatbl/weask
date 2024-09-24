@@ -1,10 +1,10 @@
 "use server"
-import db from '@/lib/db';
+import {db} from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { Message } from '../../../utils/types';
 import { v4 as uuidv4 } from 'uuid';
 
-export const fetchChatMessages = async (sessionId: string) => {
+export const fetchChatMessages = async (sessionId: string, userPlan: string) => {
   const user = await currentUser();
   if (!user) return { status: 401, messages: [] };
 
@@ -17,6 +17,8 @@ export const fetchChatMessages = async (sessionId: string) => {
       return { status: 404, message: "User not found in database", messages: [] };
     }
 
+    const messageLimit = userPlan === 'premium' ? undefined : 10;
+
     const messages = await db.chatMessage.findMany({
       where: {
         sessionId: sessionId,
@@ -25,9 +27,9 @@ export const fetchChatMessages = async (sessionId: string) => {
       orderBy: {
         createdAt: 'asc',
       },
+      take: messageLimit,
     });
 
-    // Convert the database messages to the Message type
     const typedMessages: Message[] = messages.map(msg => ({
       id: msg.id.toString(),  // Convert id to string
       role: msg.role as 'user' | 'assistant' | 'system',  // Type assertion

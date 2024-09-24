@@ -62,8 +62,8 @@ const Navbar =  async  ( props: Props) => {
           <li>
             <Link href="/blog"
               className={classnames({
-                "text-black dark:text-white relative": currentPath === "/documentation",
-                "text-neutral-500 dark:text-neutral-400": currentPath !== "/documentation",
+                "text-black dark:text-white relative": currentPath === "/blog",
+                "text-neutral-500 dark:text-neutral-400": currentPath !== "/blog",
               })}
             >
               Blog
