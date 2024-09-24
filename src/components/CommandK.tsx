@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Globe } from 'lucide-react'
+import { Loader2, Globe, FileText, File } from 'lucide-react'
 import {
   CommandDialog,
   CommandInput,
@@ -13,11 +13,15 @@ import {
   CommandItem,
 } from '@/components/ui/command'
 import CommandUrlForm from '@/components/CommandUrlForm'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 
 export function CommandK() {
   const [open, setOpen] = React.useState(false)
   const [url, setUrl] = React.useState('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [dialogOpen, setDialogOpen] = React.useState(false)
+  const [generatedContent, setGeneratedContent] = React.useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -57,6 +61,41 @@ export function CommandK() {
     }
   }
 
+  const handleGenerate = async (type: string) => {
+    setIsSubmitting(true)
+    toast({
+      title: 'Generating',
+      description: `Generating a ${type}. Please wait...`,
+      variant: 'success',
+    })
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type, content: url }), // Assuming `url` contains the content
+      })
+      const data = await response.json()
+      if (data.document && typeof data.document === 'object') {
+        setGeneratedContent(data.document.output); // Extract the 'output' field from the response
+      } else {
+        setGeneratedContent(data.document);
+      }
+      setDialogOpen(true)
+    } catch (error) {
+      console.error('Generation error:', error)
+      toast({
+        title: 'Error',
+        description: `There was an error generating the ${type}. Please try again.`,
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSubmitting(false)
+      setOpen(false)
+    }
+  }
+
   return (
     <>
       <CommandDialog open={open} onOpenChange={setOpen}>
@@ -78,8 +117,32 @@ export function CommandK() {
             </CommandItem> */}
             {/* Add more recent chats here */}
           </CommandGroup>
+          <CommandGroup heading="Generate">
+            <CommandItem onSelect={() => handleGenerate('essay')}>
+              <FileText className="mr-2 h-4 w-4" />
+              <span>Generate Essay</span>
+            </CommandItem>
+            <CommandItem onSelect={() => handleGenerate('report')}>
+              <File className="mr-2 h-4 w-4" />
+              <span>Generate Report</span>
+            </CommandItem>
+            <CommandItem onSelect={() => handleGenerate('article')}>
+              <FileText className="mr-2 h-4 w-4" />
+              <span>Generate Article</span>
+            </CommandItem>
+          </CommandGroup>
         </CommandList>
       </CommandDialog>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              <VisuallyHidden>Generated Content</VisuallyHidden>
+            </DialogTitle>
+            <DialogDescription>{generatedContent}</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

@@ -14,6 +14,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveChatMessage } from "@/app/actions/chat";
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 
 interface ChatWrapperProps {
   sessionId: string;
@@ -54,6 +56,8 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [rateLimitMessage, setRateLimitMessage] = useState('');
+  const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     if (params && Array.isArray(params.url)) {
@@ -75,6 +79,31 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
     }
   };
 
+  const handleGenerate = async (type: string) => {
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type, content: input }),
+      });
+      const data = await response.json();
+      if (data.document && typeof data.document === 'object') {
+        setGeneratedContent(data.document.output); // Extract the 'output' field from the response
+      } else {
+        setGeneratedContent(data.document);
+      }
+      setDialogOpen(true);
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast({
+        title: "Error",
+        description: `An error occurred while generating the ${type}. Please try again.`,
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="flex h-screen w-full">
@@ -87,12 +116,12 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
             <ScrollArea ref={scrollAreaRef} className="flex-1 h-[calc(100vh-8rem)] bg-zinc-800">
               <div className="p-2 mb-32">
                 <Messages messages={messages} />
-                {/* {isRateLimited && (
-                  <div className="rate-limit-message">
-                    <p>{rateLimitMessage}</p>
-                    <p>Please try again later.</p>
+                {generatedContent && (
+                  <div className="generated-content">
+                    <h2 className="text-lg font-semibold">Generated Content</h2>
+                    <p>{generatedContent}</p>
                   </div>
-                )} */}
+                )}
               </div>
             </ScrollArea>
             <div className="bg-zinc-700 p-4 sticky bottom-0 left-0 right-0">
@@ -115,6 +144,16 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
           <WebsitePreview url={websiteUrl} />
         </Panel>
       </PanelGroup>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              <VisuallyHidden>Generated Content</VisuallyHidden>
+            </DialogTitle>
+            <DialogDescription>{generatedContent}</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
