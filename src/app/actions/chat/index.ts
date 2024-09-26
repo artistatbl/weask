@@ -1,15 +1,18 @@
-"use server"
-import {db} from '@/lib/db';
+"use server";
+
+import {prisma} from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { Message } from '../../../utils/types';
 import { v4 as uuidv4 } from 'uuid';
 
+
 export const fetchChatMessages = async (sessionId: string, userPlan: string) => {
   const user = await currentUser();
-  if (!user) return { status: 401, messages: [] };
+  if (!user) return { status: 401, messages: [] };  // Ensure user is authenticated
 
   try {
-    const dbUser = await db.user.findUnique({
+    // Fetch user from the database using Clerk's id
+    const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
 
@@ -17,30 +20,34 @@ export const fetchChatMessages = async (sessionId: string, userPlan: string) => 
       return { status: 404, message: "User not found in database", messages: [] };
     }
 
+    // Determine message limit based on user plan
     const messageLimit = userPlan === 'premium' ? undefined : 10;
 
-    const messages = await db.chatMessage.findMany({
+    // Fetch messages using sessionId and userId
+    const messages = await prisma.chatMessage.findMany({
       where: {
         sessionId: sessionId,
-        userId: dbUser.id,
+        userId: dbUser.id,  // Use dbUser here
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: 'desc',
       },
-      take: messageLimit,
+      take: messageLimit,  // Limit messages if not premium
     });
 
+    // Map messages to the expected format
     const typedMessages: Message[] = messages.map(msg => ({
-      id: msg.id.toString(),  // Convert id to string
-      role: msg.role as 'user' | 'assistant' | 'system',  // Type assertion
+      id: msg.id.toString(),
+      role: msg.role as 'user' | 'assistant' | 'system',
       content: msg.content,
-      createdAt: msg.createdAt
+      createdAt: msg.createdAt,
     }));
 
-    return { status: 200, messages: typedMessages };
+    return { status: 200, messages: typedMessages }; // Return messages
+
   } catch (error: any) {
     console.error("Error fetching messages:", error);
-    return { status: 400, message: error.message, messages: [] };
+    return { status: 400, message: error.message, messages: [] }; // Handle error
   }
 };
 
@@ -49,7 +56,7 @@ export const saveChatMessage = async (sessionId: string, message: Message) => {
   if (!user) return { status: 401 };
 
   try {
-    const dbUser = await db.user.findUnique({
+    const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
 
@@ -62,7 +69,7 @@ export const saveChatMessage = async (sessionId: string, message: Message) => {
       throw new Error('Invalid message role');
     }
 
-    await db.chatMessage.create({
+    await prisma.chatMessage.create({
       data: {
         sessionId: sessionId,
         role: message.role,
@@ -83,7 +90,7 @@ export const saveSearchHistory = async (url: string, sessionId: string) => {
   if (!user) return { status: 401 };
 
   try {
-    const dbUser = await db.user.findUnique({
+    const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
 
@@ -91,7 +98,7 @@ export const saveSearchHistory = async (url: string, sessionId: string) => {
       return { status: 404, message: "User not found in database" };
     }
 
-    await db.searchHistory.create({
+    await prisma.searchHistory.create({
       data: {
         userId: dbUser.id,
         url: url,

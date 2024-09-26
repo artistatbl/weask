@@ -4,13 +4,22 @@ import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 
 interface MessageProps {
-  content: string;
+  content: string | object;
   isUserMessage: boolean;
 }
 
 export const Message = ({ content, isUserMessage }: MessageProps) => {
   const { user } = useUser();
   const userAvatarUrl = user?.imageUrl;
+
+  const renderContent = () => {
+    if (typeof content === 'string') {
+      return content;
+    } else if (typeof content === 'object') {
+      return JSON.stringify(content);
+    }
+    return '';
+  };
 
   return (
     <div className="flex justify-center mb-2 ">
@@ -33,7 +42,7 @@ export const Message = ({ content, isUserMessage }: MessageProps) => {
               </div>
             </div>
           )}
-          <div className={cn("", { "ml-8": isUserMessage })}>{content}</div>
+          <div className={cn("", { "ml-8": isUserMessage })}>{renderContent()}</div>
         </div>
       </div>
     </div>

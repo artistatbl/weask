@@ -86,7 +86,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type, content: input }),
+        body: JSON.stringify({ type, content: websiteUrl }), // Include the URL content
       });
       const data = await response.json();
       if (data.document && typeof data.document === 'object') {

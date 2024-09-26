@@ -15,7 +15,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 export function HomeSidebar() {
   const [open, setOpen] = useState(false);
   const { user } = useUser();
-  const fullName = user ? `${user.firstName} ${user.lastName}` : "User Name";
+  const fullName: string = user ? `${user.firstName} ${user.lastName}` : ""; // Updated to provide type annotation and avoid self-reference
 
   // Placeholder for chat history
   const chatHistory = [

@@ -58,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar }) => {
             <ul>
               {navItems.map((item) => (
                 <li key={item.href} className="mb-4">
-                  <Link href={item.href} className={`flex items-center p-2 rounded-md 
+                  <Link href={item.href} className={`flex items-center p-2 rounded-md  
                     ${pathname === item.href 
                       ? (isExpanded ? 'bg-gray-800' : 'bg-gray-800') 
                       : (isExpanded ? 'hover:bg-gray-800' : 'hover:bg-gray-800')}`}>

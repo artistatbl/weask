@@ -2,9 +2,9 @@ import { ChatWrapper } from "@/components/ChatWrapper";
 import { redis } from "@/lib/redis";
 import { cookies } from "next/headers";
 import { currentUser } from "@clerk/nextjs/server";
-import { fetchChatMessages, saveSearchHistory } from "@/app/actions/chat";
+import { saveSearchHistory } from "@/app/actions/chat";
 import { RedirectToSignIn } from "@clerk/nextjs";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { ragChat } from "@/lib/rag-chat"; 
 import { Message } from "@/utils/types";
 
@@ -31,39 +31,53 @@ const Page = async ({ params }: PageProps) => {
 
   const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl);
 
-  // Fetch chat history from the database
-  const dbMessages = await db.chatMessage.findMany({
-    where: { 
-      sessionId,
-      
-    },
-    orderBy: { createdAt: 'asc' },
-  });
-
-  // Convert database messages to the expected Message type
-  const initialMessages: Message[] = dbMessages.map(msg => ({
-    id: msg.id.toString(),
-    role: msg.role as 'user' | 'assistant' | 'system',
-    content: msg.content,
-    createdAt: msg.createdAt
-  }));
-
-  console.log("Fetched messages:", initialMessages.length);
-
-  if (!isAlreadyIndexed) {
-    await ragChat.context.add({
-      type: "html",
-      source: reconstructedUrl,
-      config: { chunkOverlap: 50, chunkSize: 200 },
+  try {
+    // Fetch the user from the database
+    const dbUser = await prisma.user.findUnique({
+      where: { clerkId: user.id },
     });
-    await redis.sadd("indexed-urls", reconstructedUrl);
+
+    if (!dbUser) {
+      return { status: 404, message: "User not found in database", messages: [] };
+    }
+
+    // Fetch chat history from the database using the existing db client
+    const dbMessages = await prisma.chatMessage.findMany({
+      where: { 
+        sessionId,
+        userId: dbUser.id, // Ensure you fetch the messages of the current user
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Convert database messages to the expected Message type
+    const initialMessages: Message[] = dbMessages.map(msg => ({
+      id: msg.id.toString(),
+      role: msg.role as 'user' | 'assistant' | 'system',
+      content: msg.content,
+      createdAt: msg.createdAt
+    }));
+
+    console.log("Fetched messages:", initialMessages.length);
+
+    if (!isAlreadyIndexed) {
+      await ragChat.context.add({
+        type: "html",
+        source: reconstructedUrl,
+        config: { chunkOverlap: 50, chunkSize: 200 },
+      });
+      await redis.sadd("indexed-urls", reconstructedUrl);
+    }
+
+    await saveSearchHistory(reconstructedUrl, sessionId);
+
+    return (
+      <ChatWrapper sessionId={sessionId} initialMessages={initialMessages} />
+    );
+  } catch (error) {
+    console.error("Error in Page component:", error);
+    throw error; // Re-throw the error to be caught by Next.js error boundary
   }
-
-  await saveSearchHistory(reconstructedUrl, sessionId);
-
-  return (
-    <ChatWrapper sessionId={sessionId} initialMessages={initialMessages} />
-  );
 };
 
 export default Page;

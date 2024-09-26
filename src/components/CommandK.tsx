@@ -18,7 +18,6 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 
 export function CommandK() {
   const [open, setOpen] = React.useState(false)
-  const [url, setUrl] = React.useState('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [generatedContent, setGeneratedContent] = React.useState<string | null>(null)
@@ -39,7 +38,8 @@ export function CommandK() {
 
   const handleSubmit = async (submittedUrl: string) => {
     if (submittedUrl) {
-      setIsSubmitting(true)
+      const newSessionId = `${submittedUrl}--${Date.now()}`.replace(/[^a-zA-Z0-9]/g, '')
+      localStorage.setItem('currentSessionId', newSessionId)
       toast({
         title: 'Redirecting',
         description: "You're being redirected to the chatbox. Please wait...",
@@ -74,20 +74,30 @@ export function CommandK() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type, content: url }), // Assuming `url` contains the content
+        body: JSON.stringify({ type }),
       })
       const data = await response.json()
-      if (data.document && typeof data.document === 'object') {
-        setGeneratedContent(data.document.output); // Extract the 'output' field from the response
+      if (response.ok) {
+        if (data.document && typeof data.document === 'object') {
+          setGeneratedContent(data.document.output);
+        } else {
+          setGeneratedContent(data.document);
+        }
+        setDialogOpen(true)
       } else {
-        setGeneratedContent(data.document);
+        throw new Error(data.error || 'An error occurred while generating the document')
       }
-      setDialogOpen(true)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Generation error:', error)
+      let errorMessage = `There was an error generating the ${type}. Please try again.`
+      if (error instanceof Error) {
+        if (error.message === 'Insufficient chat history to generate a document') {
+          errorMessage = 'Not enough chat history to generate a document. Please continue the conversation.'
+        }
+      }
       toast({
         title: 'Error',
-        description: `There was an error generating the ${type}. Please try again.`,
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {
@@ -99,24 +109,13 @@ export function CommandK() {
   return (
     <>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <div className="flex flex-col space-y-4 p-4 ">
+        <div className="flex flex-col space-y-4 p-4">
           <h2 className="text-lg font-semibold">Chat with a Website</h2>
-          <CommandUrlForm onSubmit={handleSubmit} initialUrl={url} />
+          <CommandUrlForm onSubmit={handleSubmit} initialUrl="" />
         </div>
-        <CommandInput
-          placeholder="Search previous chats..."
-          value={url}
-          onValueChange={setUrl}
-        />
+        <CommandInput placeholder="Type a command or search..." />
         <CommandList>
-          <CommandEmpty>No previous chats found.</CommandEmpty>
-          <CommandGroup heading="Recent Chats">
-            {/* <CommandItem onSelect={() => handleSubmit('https://bugify.vercel.app/')}>
-              <Globe className="mr-2 h-4 w-4" />
-              <span>Bugify.com</span>
-            </CommandItem> */}
-            {/* Add more recent chats here */}
-          </CommandGroup>
+          <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Generate">
             <CommandItem onSelect={() => handleGenerate('essay')}>
               <FileText className="mr-2 h-4 w-4" />
@@ -125,10 +124,6 @@ export function CommandK() {
             <CommandItem onSelect={() => handleGenerate('report')}>
               <File className="mr-2 h-4 w-4" />
               <span>Generate Report</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleGenerate('article')}>
-              <FileText className="mr-2 h-4 w-4" />
-              <span>Generate Article</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>

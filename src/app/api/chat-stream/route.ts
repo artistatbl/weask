@@ -5,14 +5,12 @@ import { processChatStream } from "@/lib/chatStreamLogic";
 
 export const POST = async (req: NextRequest) => {
   try {
-    // Get the current user
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { messages, sessionId, userPlan } = await req.json();
-
     const response = await processChatStream(user, messages, sessionId, userPlan);
     return aiUseChatAdapter(response);
 
@@ -35,9 +33,7 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
-    // Log the full error object for debugging
     console.error("Detailed error:", JSON.stringify(error, null, 2));
-
     return NextResponse.json(
       { error: "An unexpected error occurred.", details: error.message },
       { status: 500 }

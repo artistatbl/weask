@@ -8,48 +8,41 @@ import Faq from "@/components/global/faq";
 import BentoCard from "@/components/global/bentoGrid"; // Corrected import statement
 import Safari from "@/components/magicui/safari";
 import { SafariDemo } from "@/components/global/safari";
+import Navbar from "@/components/global/navbar";
+import Footer from "@/components/global/footer";
 
-const Navbar = dynamic(() => import('@/components/global/navbar'), { ssr: false });
-const Footer = dynamic(() => import('@/components/global/footer'), { ssr: false });
+// const Navbar = dynamic(() => import('@/components/global/navbar'), { ssr: false });
+// const Footer = dynamic(() => import('@/components/global/footer'), { ssr: false });
 
 export default function Home() {
   return (
     <main className="flex flex-col min-h-screen bg-white dark:bg-neutral-950">
       <Navbar />
-     
-     
-      <section className="h-screen w-full  dark:bg-neutral-950 !overflow-visible relative flex flex-col items-center antialiased bg-white dark:bg-neutral">
-        {/* <div className="absolute inset-0  h-full w-full items-center px-5 py-32"></div> */}
+      
+      <section className="flex flex-col items-center justify-center w-full bg-white dark:bg-neutral-950 relative antialiased py-10 md:py-24"> {/* Adjusted height and padding */}
+        <div className="text-center max-w-4xl mx-auto px-4 mt-24">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-t from-zinc-900 to-main mb-4">
+            Chat with Any Website Instantly
+          </h1>
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8">
+            NexusFlow AI turns websites into interactive chats. Ask questions, get instant answers, and explore web content effortlessly.
+          </p>
+          <UrlForm />
+        </div>
+        
+        <div className="mt-8 w-full flex justify-center">
+          <SafariDemo />
+        </div>
+      </section>
 
-        <div className="relative flex h-full  w-full  mt-1 flex-col items-center justify-center">
-
-
-            <div className="text-center max-w-4xl mx-auto">
-
-
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-t from-zinc-900 to-main mb-4">
-                Chat with Any Website Instantly
-              </h1>
-              <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-                NexusFlow AI turns websites into interactive chats. Ask questions, get instant answers, and explore web content effortlessly.
-              </p>
-              <UrlForm />
-            </div>
-
-
-           
-            </div>
-
-          
-       
-
-
-            <SafariDemo />
-          </section>
-       <BentoCard />
-
-          <Faq />
-       
+      <div className="py-10">
+        <BentoCard />
+      </div>
+      
+      <div className="py-10">
+        <Faq />
+      </div>
+      
       <Footer />
     </main>
   );

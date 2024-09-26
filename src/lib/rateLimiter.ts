@@ -10,7 +10,6 @@ let ratelimitConfig: RateLimitConfig = {
   enabled: false,
   ratelimit: null,
 };
-
 if (process.env.UPSTASH_REDIS_REST_URL) {
   const redis = Redis.fromEnv();
 
@@ -18,6 +17,9 @@ if (process.env.UPSTASH_REDIS_REST_URL) {
   const ratelimitFunction = new Ratelimit({
     redis: redis,
     limiter: Ratelimit.slidingWindow(5, "10 s"),
+    // limiter: Ratelimit.slidingWindow(5, "10 s", { useEval: true }), 
+    // Force using EVAL instead of EVALSHA
+
     analytics: true,
     enableProtection: true,
   });

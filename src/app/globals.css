@@ -91,11 +91,13 @@ body {
   flex: 0 0 4px;
   position: relative;
   outline: none;
-  --background-color: transparent;
+  background-color: #fff3cd;
+  /* --background-color: transparent; */
 }
 
 .ResizeHandleOuter[data-resize-handle-active] {
-  --background-color: var(--color-solid-resize-bar-handle);
+  background-color: #fff3cd;
+  /* --background-color: var(--color-solid-resize-bar-handle); */
 }
 
 .ResizeHandleInner {
@@ -144,3 +146,29 @@ body {
   text-align: center;
 }
 
+
+
+@media (max-width: 640px) { /* Mobile */
+  .custom-image-size {
+    width: 100%; /* Full width for mobile */
+    height: auto; /* Maintain aspect ratio */
+  }
+}
+@media (min-width: 641px) and (max-width: 768px) { /* Tablet */
+  .custom-image-size {
+    width: 100%; /* Full width for tablets */
+    height: auto; /* Maintain aspect ratio */
+  }
+}
+@media (min-width: 769px) and (max-width: 1024px) { /* Laptop */
+  .custom-image-size {
+    width: 100%; /* Full width for laptops */
+    height: auto; /* Maintain aspect ratio */
+  }
+}
+@media (min-width: 1025px) { /* Large screens */
+  .custom-image-size {
+    width: 100%; /* Full width for large screens */
+    height: auto; /* Maintain aspect ratio */
+  }
+}

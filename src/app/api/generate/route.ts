@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { generateDocument } from "@/lib/documentGenerator";
+import { prisma } from "@/lib/db";
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -9,9 +10,34 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { type, content } = await req.json();
+    const { type, sessionId } = await req.json();
 
-    const document = await generateDocument(type, content);
+    // Fetch the chat history for the given sessionId
+    const dbUser = await prisma.user.findUnique({
+      where: { clerkId: user.id },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found in database" }, { status: 404 });
+    }
+
+    const chatMessages = await prisma.chatMessage.findMany({
+      where: {
+        sessionId: sessionId,
+        userId: dbUser.id,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    // Combine chat messages into a single string
+    const chatHistory = chatMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n');
+
+    const document = await generateDocument(type, chatHistory);
+    if ('error' in document) {
+      return NextResponse.json({ error: document.output }, { status: 400 });
+    }
     return NextResponse.json({ document });
 
   } catch (error: any) {

@@ -33,7 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={cn(dmSans.className, "min-h-screen antialiased font-serif")}>
         <Providers>
-          <main className="h-screen text-foreground bg-white command-k-hint">
+          <main className="h-screen text-foreground bg-zinc-800 command-k-hint">
             {children}
             <CommandK />
             <OnboardingTour />

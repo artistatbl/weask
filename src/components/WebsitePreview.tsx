@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Skeleton } from "@nextui-org/react";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle } from 'lucide-react'; // Import the error icon
+import { AlertCircle, CheckCircle } from 'lucide-react'; // Import the error icon
 
 interface WebsitePreviewProps {
   url: string;
@@ -14,33 +14,47 @@ const CustomSkeleton: React.FC<React.ComponentProps<typeof Skeleton>> = (props) 
 const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [canPreview, setCanPreview] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setIsLoading(true);
     setError(null);
+    setCanPreview(false);
 
     const checkEmbeddability = async () => {
+      const storedResult = localStorage.getItem(`embeddable_${url}`);
+      
+      if (storedResult) {
+        const { embeddable, message } = JSON.parse(storedResult);
+        if (!embeddable) {
+          setError(message);
+          showErrorToast(message);
+        } else {
+          setCanPreview(true);
+          showSuccessToast();
+        }
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch(`/api/check-embeddability?url=${encodeURIComponent(url)}`);
         const data = await response.json();
 
+        localStorage.setItem(`embeddable_${url}`, JSON.stringify(data));
+
         if (!data.embeddable) {
           setError(data.message);
-          toast({
-            title: "Website Preview Unavailable",
-            description: "Website cannot be embedded due to Content Security Policy",
-            variant: "destructive",
-          });
+          showErrorToast(data.message);
         } else {
-          toast({
-            title: "Website Preview Available",
-            description: "The website can be previewed successfully.",
-            variant: "success",
-          });
+          setCanPreview(true);
+          showSuccessToast();
         }
       } catch (err) {
         console.error("Error checking embeddability:", err);
+        setError("Failed to check website preview availability.");
+        showErrorToast("Failed to check website preview availability.");
       } finally {
         setIsLoading(false);
       }
@@ -49,21 +63,33 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
     checkEmbeddability();
   }, [url, toast]);
 
+  const showErrorToast = (message: string) => {
+    toast({
+      title: "Website Preview Unavailable",
+      description: message,
+      variant: "destructive",
+    });
+  };
+
+  const showSuccessToast = () => {
+    toast({
+      title: "Website Preview Available",
+      description: "The website can be previewed successfully.",
+      variant: "success",
+    });
+  };
+
   const handleIframeLoad = () => {
     setIsLoading(false);
   };
 
   const handleIframeError = () => {
     setError("Failed to load the website preview.");
-    toast({
-      title: "Website Preview Unavailable",
-      description: "Failed to load the website preview.",
-      variant: "destructive",
-    });
+    showErrorToast("Failed to load the website preview.");
   };
 
   return (
-    <div className="h-full relative">
+    <div className="h-full relative ">
       {isLoading && (
         <div className="absolute inset-0 p-4 bg-zinc-800">
           <div className="flex flex-col h-full">
@@ -96,7 +122,7 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
             </a>
           </div>
         </div>
-      ) : (
+      ) : canPreview ? (
         <iframe 
           src={url} 
           title="Website Preview" 
@@ -105,7 +131,7 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
           onLoad={handleIframeLoad}
           onError={handleIframeError}
         />
-      )}
+      ) : null}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import {db} from '@/lib/db'
+import {prisma} from '@/lib/db'
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     const { id, email_addresses, first_name, last_name, image_url } = userData;
     const email = email_addresses[0]?.email_address;
 
-    return db.user.upsert({
+    return prisma.user.upsert({
       where: { clerkId: id },
       update: {
         email,
@@ -79,12 +79,12 @@ export async function POST(req: Request) {
         const user = await upsertUser(payload.data);
 
         // Check if the user already has a subscription
-        const existingSubscription = await db.subscriptions.findFirst({
+        const existingSubscription = await prisma.subscriptions.findFirst({
           where: { clerkId: user.clerkId },
         });
 
         if (!existingSubscription) {
-          await db.subscriptions.create({
+          await prisma.subscriptions.create({
             data: {
               subscriptionId: `sub_${user.id}_${Date.now()}`,
               stripeuserId: `cus_${user.id}`,

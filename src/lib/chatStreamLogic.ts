@@ -1,41 +1,40 @@
 import { ragChat } from "@/lib/rag-chat";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { ratelimitConfig } from "@/lib/rateLimiter";
 import { User } from "@clerk/nextjs/server";
+import { redis } from "@/lib/redis";
+import { retryWithBackoff } from "@/lib/retry-backoff";
+import { tokenTracker } from "@/lib/tokenTracker";
+import { estimateTokens } from "@/lib/utils";
+import { RagChatResponse } from "@/types/ragChat";
 
 export async function processChatStream(user: User, messages: any[], sessionId: string, userPlan: string) {
-  // Apply rate limiting
   if (ratelimitConfig.enabled && ratelimitConfig.ratelimit) {
-    try {
-      const { success, reset, remaining } = await ratelimitConfig.ratelimit.limit(user.id);
-      const resetInMinutes = Math.ceil((reset - Date.now()) / 60000);
-      console.log(`Rate limit check for user ${user.id}: success=${success}, remaining=${remaining}, reset in ${resetInMinutes} minutes`);
-      if (!success) {
-        throw { 
-          status: 429, 
-          message: `Rate limit exceeded. Please try again in ${resetInMinutes} minutes.`, 
-          reset: resetInMinutes 
-        };
-      }
-    } catch (error) {
-      console.error("Rate limiting error:", error);
-      // If there's an error with rate limiting, we'll log it but allow the request to proceed
+    const { success, reset, remaining } = await ratelimitConfig.ratelimit.limit(user.id);
+    const resetInMinutes = Math.ceil((reset - Date.now()) / 60000);
+    console.log(`Rate limit check for user ${user.id}: success=${success}, remaining=${remaining}, reset in ${resetInMinutes} minutes`);
+    if (!success) {
+      throw { 
+        status: 429, 
+        message: `Rate limit exceeded. Please try again in ${resetInMinutes} minutes.`, 
+        reset: resetInMinutes 
+      };
     }
   }
 
   const lastMessage = messages[messages.length - 1].content;
+  const estimatedTokens = estimateTokens(lastMessage);
 
-  // Find the user in the database
-  const dbUser = await db.user.findUnique({
-    where: { clerkId: user.id },
-  });
+  if (!(await tokenTracker.canMakeRequest(estimatedTokens))) {
+    throw { status: 429, message: "API rate limit approached. Please try again later." };
+  }
 
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: user.id } });
   if (!dbUser) {
     throw { status: 404, message: "User not found in database" };
   }
 
-  // Save user message to database
-  await db.chatMessage.create({
+  await prisma.chatMessage.create({
     data: {
       sessionId,
       role: "user",
@@ -44,7 +43,22 @@ export async function processChatStream(user: User, messages: any[], sessionId: 
     },
   });
 
-  // Process the chat with ragChat
   const aiOptions = userPlan === 'premium' ? { advanced: true } : { basic: true };
-  return ragChat.chat(lastMessage, { streaming: true, sessionId, ...aiOptions });
+  
+  const cacheKey = `response:${sessionId}:${lastMessage}`;
+  const cachedResponse = await redis.get(cacheKey);
+  if (cachedResponse && typeof cachedResponse === 'string') {
+    return JSON.parse(cachedResponse);
+  }
+
+  const result = await retryWithBackoff(async () => {
+    const response: RagChatResponse = await ragChat.chat(lastMessage, { streaming: true, sessionId, ...aiOptions });
+    if (response.usage && typeof response.usage.total_tokens === 'number') {
+      await tokenTracker.recordUsage(response.usage.total_tokens, estimatedTokens);
+    }
+    return response;
+  });
+
+  await redis.set(cacheKey, JSON.stringify(result), { ex: 3600 });
+  return result;
 }
