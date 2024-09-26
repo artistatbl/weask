@@ -38,6 +38,7 @@ export const POST = async (req: NextRequest) => {
     if ('error' in document) {
       return NextResponse.json({ error: document.output }, { status: 400 });
     }
+    console.log('Generated document:', document); // Add this line
     return NextResponse.json({ document });
 
   } catch (error: any) {

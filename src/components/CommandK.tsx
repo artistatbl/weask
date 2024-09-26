@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Globe, FileText, File } from 'lucide-react'
+import { Loader2, FileText, File, Copy } from 'lucide-react'
 import {
   CommandDialog,
   CommandInput,
@@ -13,14 +13,22 @@ import {
   CommandItem,
 } from '@/components/ui/command'
 import CommandUrlForm from '@/components/CommandUrlForm'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+
+interface GeneratedContent {
+  title?: string;
+  introduction?: string;
+  mainContent?: { heading: string; paragraphs: string[] }[];
+  conclusion?: string;
+}
 
 export function CommandK() {
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [dialogOpen, setDialogOpen] = React.useState(false)
-  const [generatedContent, setGeneratedContent] = React.useState<string | null>(null)
+  const [generatedContent, setGeneratedContent] = React.useState<GeneratedContent | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -35,6 +43,10 @@ export function CommandK() {
     document.addEventListener('keydown', down)
     return () => document.removeEventListener('keydown', down)
   }, [])
+
+  React.useEffect(() => {
+    console.log('Generated content updated:', generatedContent);
+  }, [generatedContent]);
 
   const handleSubmit = async (submittedUrl: string) => {
     if (submittedUrl) {
@@ -77,12 +89,10 @@ export function CommandK() {
         body: JSON.stringify({ type }),
       })
       const data = await response.json()
+      console.log('Received data:', data) // Add this line
       if (response.ok) {
-        if (data.document && typeof data.document === 'object') {
-          setGeneratedContent(data.document.output);
-        } else {
-          setGeneratedContent(data.document);
-        }
+        setGeneratedContent(data.document);
+        console.log('Set generated content:', data.document) // Add this line
         setDialogOpen(true)
       } else {
         throw new Error(data.error || 'An error occurred while generating the document')
@@ -103,6 +113,38 @@ export function CommandK() {
     } finally {
       setIsSubmitting(false)
       setOpen(false)
+    }
+  }
+
+  const copyToClipboard = () => {
+    if (generatedContent) {
+      const fullContent = `
+        ${generatedContent.title || 'Generated Content'}
+
+        ${generatedContent.introduction ? `Introduction:\n${generatedContent.introduction}\n\n` : ''}
+
+        ${generatedContent.mainContent ? generatedContent.mainContent.map(section => `
+          ${section.heading}
+          ${section.paragraphs.join('\n\n')}
+        `).join('\n\n') : 'No main content available.'}
+
+        ${generatedContent.conclusion ? `Conclusion:\n${generatedContent.conclusion}` : ''}
+      `.trim()
+
+      navigator.clipboard.writeText(fullContent).then(() => {
+        toast({
+          title: 'Copied',
+          description: 'Content copied to clipboard',
+          variant: 'success',
+        })
+      }, (err) => {
+        console.error('Could not copy text: ', err)
+        toast({
+          title: 'Error',
+          description: 'Failed to copy content',
+          variant: 'destructive',
+        })
+      })
     }
   }
 
@@ -129,13 +171,47 @@ export function CommandK() {
         </CommandList>
       </CommandDialog>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl h-[80vh] flex flex-col bg-white dark:bg-zinc-900">
           <DialogHeader>
-            <DialogTitle>
-              <VisuallyHidden>Generated Content</VisuallyHidden>
+            <DialogTitle className="text-2xl font-bold text-center text-zinc-800 dark:text-zinc-100">
+              {generatedContent?.title || 'Generated Content'}
             </DialogTitle>
-            <DialogDescription>{generatedContent}</DialogDescription>
           </DialogHeader>
+          <ScrollArea className="flex-grow pr-4">
+            <div className="space-y-6 text-zinc-700 dark:text-zinc-300">
+              {generatedContent?.introduction && (
+                <section>
+                  <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Introduction</h3>
+                  <p className="text-lg leading-relaxed">{generatedContent.introduction}</p>
+                </section>
+              )}
+              {generatedContent?.mainContent && generatedContent.mainContent.length > 0 && (
+                <section>
+                  <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Main Content</h3>
+                  {generatedContent.mainContent.map((section, index) => (
+                    <div key={index} className="mb-6">
+                      <h4 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">{section.heading}</h4>
+                      {section.paragraphs.map((paragraph, pIndex) => (
+                        <p key={pIndex} className="mb-3 text-base leading-relaxed">{paragraph}</p>
+                      ))}
+                    </div>
+                  ))}
+                </section>
+              )}
+              {generatedContent?.conclusion && (
+                <section>
+                  <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Conclusion</h3>
+                  <p className="text-lg leading-relaxed">{generatedContent.conclusion}</p>
+                </section>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="mt-6 flex justify-end">
+            <Button onClick={copyToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Content
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>
