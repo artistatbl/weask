@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, FileText, File, Copy } from 'lucide-react'
 import {
@@ -29,8 +29,36 @@ export function CommandK() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [generatedContent, setGeneratedContent] = React.useState<GeneratedContent | null>(null)
+  const [currentSessionId, setCurrentSessionId] = React.useState<string | null>(null);
+  const [currentUrl, setCurrentUrl] = React.useState<string | null>(null);
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
+
+  React.useEffect(() => {
+    const sessionId = localStorage.getItem('currentSessionId');
+    setCurrentSessionId(sessionId);
+    console.log('Current session ID:', sessionId);
+  }, []);
+
+  React.useEffect(() => {
+    const updateCurrentUrl = () => {
+      if (pathname && pathname.startsWith('/chat/')) {
+        const encodedUrl = pathname.replace('/chat/', '');
+        const decodedUrl = decodeURIComponent(encodedUrl);
+        setCurrentUrl(decodedUrl);
+        console.log('Current URL updated:', decodedUrl);
+      }
+    };
+
+    updateCurrentUrl();
+
+    window.addEventListener('popstate', updateCurrentUrl);
+
+    return () => {
+      window.removeEventListener('popstate', updateCurrentUrl);
+    };
+  }, [pathname]);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -43,10 +71,6 @@ export function CommandK() {
     document.addEventListener('keydown', down)
     return () => document.removeEventListener('keydown', down)
   }, [])
-
-  React.useEffect(() => {
-    console.log('Generated content updated:', generatedContent);
-  }, [generatedContent]);
 
   const handleSubmit = async (submittedUrl: string) => {
     if (submittedUrl) {
@@ -81,18 +105,23 @@ export function CommandK() {
       variant: 'success',
     })
     try {
+      if (!currentUrl) {
+        throw new Error('No URL available to generate content');
+      }
+      console.log('Generating document for URL:', currentUrl);
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ type, url: currentUrl }),
       })
       const data = await response.json()
-      console.log('Received data:', data) // Add this line
+      console.log('Received data:', data)
       if (response.ok) {
         setGeneratedContent(data.document);
-        console.log('Set generated content:', data.document) // Add this line
+        console.log('Generated content:', data.document);
+        console.log('Main content:', data.document?.mainContent);
         setDialogOpen(true)
       } else {
         throw new Error(data.error || 'An error occurred while generating the document')
@@ -101,9 +130,7 @@ export function CommandK() {
       console.error('Generation error:', error)
       let errorMessage = `There was an error generating the ${type}. Please try again.`
       if (error instanceof Error) {
-        if (error.message === 'Insufficient chat history to generate a document') {
-          errorMessage = 'Not enough chat history to generate a document. Please continue the conversation.'
-        }
+        errorMessage = error.message;
       }
       toast({
         title: 'Error',
@@ -174,7 +201,7 @@ export function CommandK() {
         <DialogContent className="max-w-4xl h-[80vh] flex flex-col bg-white dark:bg-zinc-900">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center text-zinc-800 dark:text-zinc-100">
-              {generatedContent?.title || 'Generated Content'}
+              {generatedContent?.title || ''}
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="flex-grow pr-4">
@@ -190,7 +217,7 @@ export function CommandK() {
                   <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Main Content</h3>
                   {generatedContent.mainContent.map((section, index) => (
                     <div key={index} className="mb-6">
-                      <h4 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">{section.heading}</h4>
+                      <h4 className="text-lg font-medium text-zinc-800 dark:text-zinc-200 mb-2">{section.heading}</h4>
                       {section.paragraphs.map((paragraph, pIndex) => (
                         <p key={pIndex} className="mb-3 text-base leading-relaxed">{paragraph}</p>
                       ))}

@@ -7,6 +7,8 @@
   padding: 0;
   margin: 0;
   box-sizing: border-box;
+  transition: all 0.2s ease-out;
+
 }
 
 body {
@@ -87,66 +89,41 @@ body {
 
 
 /* Styles for react-resizable-panels */
-.ResizeHandleOuter {
-  flex: 0 0 4px;
+.resize-handle {
+  width: 10px;
   position: relative;
-  outline: none;
-  background-color: #fff3cd;
-  /* --background-color: transparent; */
 }
 
-.ResizeHandleOuter[data-resize-handle-active] {
-  background-color: #fff3cd;
-  /* --background-color: var(--color-solid-resize-bar-handle); */
-}
-
-.ResizeHandleInner {
+.resize-handle-inner {
   position: absolute;
-  top: 0.25rem;
-  bottom: 0.25rem;
-  left: 0.25rem;
-  right: 0.25rem;
-  border-radius: 0.25rem;
-  background-color: var(--background-color);
-  transition: background-color 0.2s linear;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 100px;
+  border-radius: 4px;
+  cursor: col-resize;
 }
 
-[data-panel-group-direction="vertical"] > .ResizeHandleOuter {
+[data-panel-group-direction="vertical"] > .resize-handle {
   height: 10px;
   width: 100%;
 }
 
-[data-panel-group-direction="vertical"] > .ResizeHandleOuter > .ResizeHandleInner {
-  top: 0.25rem;
-  bottom: 0.25rem;
-  left: 0;
-  right: 0;
+[data-panel-group-direction="vertical"] > .resize-handle > .resize-handle-inner {
+  width: 100px;
+  height: 40px;
+  cursor: row-resize;
 }
 
-[data-panel-group-direction="horizontal"] > .ResizeHandleOuter {
-  width: 10px;
-  height: 100%;
-}
-
-[data-panel-group-direction="horizontal"] > .ResizeHandleOuter > .ResizeHandleInner {
-  top: 0;
-  bottom: 0;
-  left: 0.25rem;
-  right: 0.25rem;
-}
-
-.rate-limit-message {
-  background-color: #fff3cd;
-  border: 1px solid #ffeeba;
-  color: #856404;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 5px;
-  font-size: 0.9rem;
-  text-align: center;
+.website-preview-container {
+  animation: none !important;
+  transform: none !important;
 }
 
 
+
+/* ... rest of your existing styles ... */
 
 @media (max-width: 640px) { /* Mobile */
   .custom-image-size {
@@ -168,7 +145,7 @@ body {
 }
 @media (min-width: 1025px) { /* Large screens */
   .custom-image-size {
-    width: 100%; /* Full width for large screens */
+    width: 100vh; 
     height: auto; /* Maintain aspect ratio */
   }
 }

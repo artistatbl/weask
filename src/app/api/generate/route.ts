@@ -10,9 +10,12 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { type, sessionId } = await req.json();
+    const { type, url } = await req.json();
 
-    // Fetch the chat history for the given sessionId
+    if (!url) {
+      return NextResponse.json({ error: "URL is required" }, { status: 400 });
+    }
+
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
@@ -21,24 +24,13 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
-    const chatMessages = await prisma.chatMessage.findMany({
-      where: {
-        sessionId: sessionId,
-        userId: dbUser.id,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+    console.log('Generating document for URL:', url);
 
-    // Combine chat messages into a single string
-    const chatHistory = chatMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n');
-
-    const document = await generateDocument(type, chatHistory);
+    const document = await generateDocument(type, url, user.id);
     if ('error' in document) {
       return NextResponse.json({ error: document.output }, { status: 400 });
     }
-    console.log('Generated document:', document); // Add this line
+    console.log('Generated document:', document);
     return NextResponse.json({ document });
 
   } catch (error: any) {

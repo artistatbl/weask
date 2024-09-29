@@ -1,15 +1,20 @@
-import { Message as AIMessage } from "ai/react";
+import { Message as TMessage } from "ai/react";
 import { Message } from "./Message";
 import { MessageSquare } from "lucide-react";
 
 interface MessagesProps {
-  messages: AIMessage[];
+  messages: TMessage[];
 }
 
 export const Messages = ({ messages }: MessagesProps) => {
   return (
     <div className="flex flex-col space-y-4 p-4 ai-response">
-      {messages.length === 0 ? (
+
+        {messages.length ? (
+        messages.map((message, i) => (
+          <Message key={i} content={message.content} isUserMessage={message.role === "user"} />
+        ))
+      ) : (
         <div className="flex flex-col items-center justify-center h-full space-y-4">
           <MessageSquare className="size-16 text-blue-500" />
           <h3 className="font-semibold text-2xl text-white">Welcome to NectLink Chat!</h3>
@@ -18,14 +23,7 @@ export const Messages = ({ messages }: MessagesProps) => {
             Our AI is ready to assist you!
           </p>
         </div>
-      ) : (
-        messages.map((message, index) => (
-          <Message
-            key={index}
-            content={message.content}
-            isUserMessage={message.role === "user"}
-          />
-        ))
+     
       )}
     </div>
   );

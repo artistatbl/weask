@@ -5,8 +5,12 @@ import { currentUser } from "@clerk/nextjs/server";
 import { saveSearchHistory } from "@/app/actions/chat";
 import { RedirectToSignIn } from "@clerk/nextjs";
 import { prisma } from "@/lib/db";
-import { ragChat } from "@/lib/rag-chat"; 
+import { ragChat } from "@/lib/rag-chat";
+
+
+
 import { Message } from "@/utils/types";
+import { Prisma } from "@prisma/client";
 
 interface PageProps {
   params: {
@@ -15,69 +19,109 @@ interface PageProps {
 }
 
 function reconstructUrl({ url }: { url: string[] }) {
+  console.log("Reconstructing URL from:", url);
   const decodedComponents = url.map((component) => decodeURIComponent(component));
-  return decodedComponents.join("//");
+  const result = decodedComponents.join('/').replace(/^https:\//, 'https://');
+  console.log("Reconstructed URL:", result);
+  return result;
 }
 
 const Page = async ({ params }: PageProps) => {
+  console.log("Starting Page component with params:", params);
+
   const user = await currentUser();
+  console.log("Current user:", user ? user.id : "Not authenticated");
+
   if (!user) {
+    console.log("Redirecting to sign in");
     return <RedirectToSignIn />;
   }
 
-  const sessionCookie = cookies().get("sessionId")?.value;
-  const reconstructedUrl = reconstructUrl({ url: params.url as string[] });
-  const sessionId = (reconstructedUrl + "--" + sessionCookie).replace(/\//g, "");
+  const sessionCookie = cookies().get("sessionId")?.value ?? 'default';
+  console.log("Session cookie:", sessionCookie);
 
-  const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl);
+  const reconstructedUrl = reconstructUrl({ url: params.url as string[] });
+  console.log("Reconstructed URL:", reconstructedUrl);
+
+  const sessionId = (reconstructedUrl + "--" + sessionCookie).replace(/[/:]/g, "");
+  console.log("Generated session ID:", sessionId);
 
   try {
-    // Fetch the user from the database
+    console.log("Checking if URL is already indexed");
+    const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl);
+    console.log("Is URL already indexed:", isAlreadyIndexed);
+
+    console.log("Fetching user from database");
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
 
     if (!dbUser) {
+      console.log("User not found in database");
       return { status: 404, message: "User not found in database", messages: [] };
     }
 
-    // Fetch chat history from the database using the existing db client
+    console.log("User found in database:", dbUser.id);
+
+    console.log("Fetching messages for session");
     const dbMessages = await prisma.chatMessage.findMany({
-      where: { 
-        sessionId,
-        userId: dbUser.id, // Ensure you fetch the messages of the current user
-      },
-      orderBy: { createdAt: 'asc' },
+      where: { sessionId },
+      orderBy: { createdAt: "asc" },
     });
 
-    // Convert database messages to the expected Message type
-    const initialMessages: Message[] = dbMessages.map(msg => ({
+    const initialMessages: Message[] = dbMessages.map((msg) => ({
       id: msg.id.toString(),
-      role: msg.role as 'user' | 'assistant' | 'system',
+      role: msg.role as "user" | "assistant" | "system",
       content: msg.content,
-      createdAt: msg.createdAt
+      createdAt: msg.createdAt,
     }));
 
-    console.log("Fetched messages:", initialMessages.length);
+    console.log("Fetched messages count:", initialMessages.length);
 
     if (!isAlreadyIndexed) {
-      await ragChat.context.add({
-        type: "html",
-        source: reconstructedUrl,
-        config: { chunkOverlap: 50, chunkSize: 200 },
-      });
-      await redis.sadd("indexed-urls", reconstructedUrl);
+      console.log("URL not indexed, starting indexing process");
+      try {
+        const RagChatComponent = await ragChat;
+        if (RagChatComponent && RagChatComponent.context && RagChatComponent.context.add) {
+          await RagChatComponent.context.add({
+            type: "html",
+            source: reconstructedUrl,
+            config: { chunkOverlap: 50, chunkSize: 200 },
+          });
+          await redis.sadd("indexed-urls", reconstructedUrl);
+          console.log("URL indexed successfully");
+        } else {
+          console.error("RagChat or its context is not available");
+        }
+      } catch (error) {
+        console.error("Error during indexing:", error);
+      }
     }
 
+    console.log("Saving search history");
     await saveSearchHistory(reconstructedUrl, sessionId);
+    console.log("Search history saved");
 
-    return (
-      <ChatWrapper sessionId={sessionId} initialMessages={initialMessages} />
-    );
-  } catch (error) {
+    console.log("Rendering ChatWrapper");
+    return <ChatWrapper sessionId={sessionId} initialMessages={initialMessages}  isAlreadyIndexed/>;
+  } catch (error: any) {
     console.error("Error in Page component:", error);
-    throw error; // Re-throw the error to be caught by Next.js error boundary
+    console.error("Error stack:", error.stack);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error("Prisma error:", error.code, error.message);
+      return (
+        <div>Error with the database: {error.message}. Please try again later.</div>
+      );
+    } else if (error instanceof TypeError) {
+      console.error("Type error:", error.message);
+      return (
+        <div>An unexpected type error occurred: {error.message}. Please try again later.</div>
+      );
+    }
+
+    return <div>An unexpected error occurred. Please check the server logs for more details.</div>;
   }
-};
+}
 
 export default Page;

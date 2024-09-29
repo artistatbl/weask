@@ -1,14 +1,13 @@
 import { ragChat } from "@/lib/rag-chat";
 import { prisma } from "@/lib/db";
 import { ratelimitConfig } from "@/lib/rateLimiter";
-import { User } from "@clerk/nextjs/server";
+import * as server from "@clerk/nextjs/server";
 import { redis } from "@/lib/redis";
 import { retryWithBackoff } from "@/lib/retry-backoff";
-import { tokenTracker } from "@/lib/tokenTracker";
 import { estimateTokens } from "@/lib/utils";
 import { RagChatResponse } from "@/types/ragChat";
 
-export async function processChatStream(user: User, messages: any[], sessionId: string, userPlan: string) {
+export async function processChatStream(user: server.User, messages: any[], sessionId: string, userPlan: string) {
   if (ratelimitConfig.enabled && ratelimitConfig.ratelimit) {
     const { success, reset, remaining } = await ratelimitConfig.ratelimit.limit(user.id);
     const resetInMinutes = Math.ceil((reset - Date.now()) / 60000);
@@ -25,9 +24,7 @@ export async function processChatStream(user: User, messages: any[], sessionId: 
   const lastMessage = messages[messages.length - 1].content;
   const estimatedTokens = estimateTokens(lastMessage);
 
-  if (!(await tokenTracker.canMakeRequest(estimatedTokens))) {
-    throw { status: 429, message: "API rate limit approached. Please try again later." };
-  }
+  
 
   const dbUser = await prisma.user.findUnique({ where: { clerkId: user.id } });
   if (!dbUser) {
@@ -53,8 +50,8 @@ export async function processChatStream(user: User, messages: any[], sessionId: 
 
   const result = await retryWithBackoff(async () => {
     const response: RagChatResponse = await ragChat.chat(lastMessage, { streaming: true, sessionId, ...aiOptions });
-    if (response.usage && typeof response.usage.total_tokens === 'number') {
-      await tokenTracker.recordUsage(response.usage.total_tokens, estimatedTokens);
+    if ((response as any).usage && typeof (response as any).usage.total_tokens === 'number') {
+     // await tokenTracker.recordUsage((response as any).usage.total_tokens, estimatedTokens);
     }
     return response;
   });

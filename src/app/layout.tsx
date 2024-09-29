@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster"
 import { CommandK } from "@/components/CommandK";
 import dynamic from 'next/dynamic';
+import DiagnosticComponent from "@/hooks/DiagnosticComponent";
 
 const OnboardingTour = dynamic(() => import('@/components/OnboardingTour').then(mod => mod.OnboardingTour), {
   ssr: false,
@@ -36,6 +37,7 @@ export default function RootLayout({
           <main className="h-screen text-foreground bg-zinc-800 command-k-hint">
             {children}
             <CommandK />
+            {/* <DiagnosticComponent/> */}
             <OnboardingTour />
           </main>
           <Toaster />

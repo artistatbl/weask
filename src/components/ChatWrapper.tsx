@@ -14,16 +14,23 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveChatMessage } from "@/app/actions/chat";
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import { GripVertical } from 'lucide-react'; 
+import ErrorBoundary from "@/hooks/Error-Boundary";
+import LoadingPage from "@/components/LoadingPage";
 
 interface ChatWrapperProps {
   sessionId: string;
   initialMessages: Message[];
+  isAlreadyIndexed: boolean;
+
 }
 
-export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }) => {
+export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, isAlreadyIndexed }) => {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(!isAlreadyIndexed);
+  console.log(isAlreadyIndexed)
+
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const { messages, handleInputChange, handleSubmit, input, setInput } = useChat({
     api: "/api/chat-stream",
     body: { sessionId },
@@ -33,31 +40,17 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
     },
     onError: (error) => {
       console.error("Chat error:", error);
-      if (error.message.includes("Rate limit exceeded")) {
-        setIsRateLimited(true);
-        setRateLimitMessage(error.message);
-        toast({
-          title: "Rate Limit Exceeded",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "An error occurred while sending your message",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: "An error occurred while sending your message",
+        variant: "destructive",
+      });
     },
   });
 
   const params = useParams();
   const [websiteUrl, setWebsiteUrl] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [isRateLimited, setIsRateLimited] = useState(false);
-  const [rateLimitMessage, setRateLimitMessage] = useState('');
-  const [generatedContent, setGeneratedContent] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     if (params && Array.isArray(params.url)) {
@@ -70,6 +63,19 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    const initializeChat = async () => {
+      for (let i = 0; i < 5; i++) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setLoadingProgress(prev => Math.min(prev + 20, 100));
+      }
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setIsLoading(false);
+    };
+
+    initializeChat();
+  }, [isAlreadyIndexed]);
+
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -79,31 +85,9 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
     }
   };
 
-  const handleGenerate = async (type: string) => {
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ type, content: websiteUrl }), // Include the URL content
-      });
-      const data = await response.json();
-      if (data.document && typeof data.document === 'object') {
-        setGeneratedContent(data.document.output); // Extract the 'output' field from the response
-      } else {
-        setGeneratedContent(data.document);
-      }
-      setDialogOpen(true);
-    } catch (error) {
-      console.error("Generation error:", error);
-      toast({
-        title: "Error",
-        description: `An error occurred while generating the ${type}. Please try again.`,
-        variant: "destructive",
-      });
-    }
-  };
+  if (isLoading) {
+    return <LoadingPage progress={loadingProgress} />;
+  }
 
   return (
     <div className="flex h-screen w-full">
@@ -115,13 +99,9 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
             </div>
             <ScrollArea ref={scrollAreaRef} className="flex-1 h-[calc(100vh-8rem)] bg-zinc-800">
               <div className="p-2 mb-32">
-                <Messages messages={messages} />
-                {generatedContent && (
-                  <div className="generated-content">
-                    <h2 className="text-lg font-semibold">Generated Content</h2>
-                    <p>{generatedContent}</p>
-                  </div>
-                )}
+                <ErrorBoundary fallback={<div>Error rendering messages</div>}>
+                  <Messages messages={messages} />
+                </ErrorBoundary>
               </div>
             </ScrollArea>
             <div className="bg-zinc-700 p-4 sticky bottom-0 left-0 right-0">
@@ -137,23 +117,15 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages }
             </div>
           </div>
         </Panel>
-        <PanelResizeHandle className="ResizeHandleOuter">
-          <div className="ResizeHandleInner" />
+        <PanelResizeHandle className="resize-handle flex items-center justify-center">
+          <div className="resize-handle-inner bg-zinc-700 hover:bg-zinc-500 transition-colors duration-200 flex items-center justify-center">
+            <GripVertical className="text-zinc-950 w-10 h-10 pr-3 text-center" />
+          </div>
         </PanelResizeHandle>
         <Panel defaultSize={50} minSize={30}>
           <WebsitePreview url={websiteUrl} />
         </Panel>
       </PanelGroup>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              <VisuallyHidden>Generated Content</VisuallyHidden>
-            </DialogTitle>
-            <DialogDescription>{generatedContent}</DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

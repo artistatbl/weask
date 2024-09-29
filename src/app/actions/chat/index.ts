@@ -3,7 +3,7 @@
 import {prisma} from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { Message } from '../../../utils/types';
-import { v4 as uuidv4 } from 'uuid';
+
 
 
 export const fetchChatMessages = async (sessionId: string, userPlan: string) => {
@@ -101,7 +101,7 @@ export const saveSearchHistory = async (url: string, sessionId: string) => {
     await prisma.searchHistory.create({
       data: {
         userId: dbUser.id,
-        url: url,
+        domain: url,
         sessionId: sessionId,
       },
     });

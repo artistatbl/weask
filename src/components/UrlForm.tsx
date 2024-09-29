@@ -1,40 +1,55 @@
 'use client'
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react"; // Import the spinner icon
+import { Loader2 } from "lucide-react";
 
 export default function UrlForm() {
   const [url, setUrl] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (url) {
-      setIsSubmitting(true);
-      toast({
-        title: "Redirecting",
-        description: "You're being redirected to the chatbox. Please wait...",
-        variant: "success",
-      });
+      setIsLoading(true);
       try {
-        // Simulate a delay to show the spinner (remove this in production)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await router.push(`/chat/${encodeURIComponent(url)}`);
+        const response = await fetch(`/api/check-embeddability?url=${encodeURIComponent(url)}`, {
+          method: 'GET', // Ensure this is a GET request
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.isEmbeddable) {
+          toast({
+            title: "Success",
+            description: "Website preview is available. Starting chat...",
+            variant: "success",
+          });
+          await router.push(`/chat/${encodeURIComponent(url)}`);
+        } else {
+          toast({
+            title: "Website Preview Unavailable",
+            description: "This website cannot be embedded for preview.",
+            variant: "destructive",
+          });
+        }
       } catch (error) {
-        console.error("Navigation error:", error);
+        console.error("Error checking embeddability:", error);
         toast({
           title: "Error",
-          description: "There was an error redirecting you. Please try again.",
+          description: "Failed to check website preview availability.",
           variant: "destructive",
         });
       } finally {
-        setIsSubmitting(false);
+        setIsLoading(false);
       }
     }
   };
@@ -46,24 +61,24 @@ export default function UrlForm() {
           <span className="absolute left-1 top-1/2 -translate-y-1/2 bg-zinc-900 text-white text-sm font-serif md:text-sm px-3 py-1 rounded">
             Url Link
           </span>
-          <Input 
-            type="url" 
-            value={url} 
+          <Input
+            type="url"
+            value={url}
             onChange={(e) => setUrl(e.target.value)}
             required
             className="pl-20 md:pl-24 w-full"
             placeholder="Enter URL here"
-            disabled={isSubmitting}
+            disabled={isLoading}
           />
         </div>
-        <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-          {isSubmitting ? (
+        <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
+          {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Loading...
+              Checking...
             </>
           ) : (
-            'Chat'
+            'Start Chat'
           )}
         </Button>
       </div>

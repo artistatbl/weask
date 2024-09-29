@@ -1,6 +1,6 @@
 export interface RagChatResponse {
-  output: ReadableStream<string>;
-  isStream: true;
+  output: string | ReadableStream<string>;
+  isStream: boolean;
   metadata: object[];
   context: {
     data: string;
@@ -10,13 +10,9 @@ export interface RagChatResponse {
   history: {
     role: "user" | "assistant";
     content: string;
-   // metadata?: UpstashDict;
     usage_metadata?: {
       total_tokens: number;
     };
     id: string;
   }[];
-  usage?: {
-    total_tokens: number;
-  };
 }
