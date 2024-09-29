@@ -67,8 +67,8 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
     const initializeChat = async () => {
       if (!isAlreadyIndexed) {
         for (let i = 0; i < 5; i++) {
-          await new Promise(resolve => setTimeout(resolve, 800));
-          setLoadingProgress(prev => Math.min(prev + 20, 100));
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          setLoadingProgress(prev => Math.min(prev + 10, 100));
         }
       }
       setIsLoading(false);
@@ -93,7 +93,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full body">
       <HomeSidebar />
       <PanelGroup direction="horizontal" className="flex-1">
         <Panel defaultSize={50} minSize={30}>

@@ -68,7 +68,7 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
   };
 
   return (
-    <div className="h-full relative">
+    <div className="h-full relative website-preview">
       {isLoading && (
         <div className="absolute inset-0 p-4 bg-zinc-800">
           <div className="flex flex-col h-full">

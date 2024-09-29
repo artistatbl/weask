@@ -56,7 +56,7 @@ function OnboardingTourComponent() {
     console.log('Is signed in:', isSignedIn);
 
     if (isSignedIn && isChatPage && !hasSeenTour) {
-      console.log('Starting tour in 2 seconds...');
+      console.log('Starting tour in 5 seconds...');
       setTimeout(() => {
         const filteredSteps = steps.filter(step => 
           step.target === 'body' || document.querySelector(step.target as string)
@@ -64,7 +64,7 @@ function OnboardingTourComponent() {
         setValidSteps(filteredSteps);
         console.log('Valid steps:', filteredSteps);
         setRun(true);
-      }, 2000);
+      },6000);
     }
   }, [pathname, isSignedIn]);
 
@@ -118,8 +118,31 @@ function OnboardingTourComponent() {
       stepIndex={stepIndex}
       styles={{
         options: {
-          primaryColor: '#007bff',
+          primaryColor: '#3b82f6', // Tailwind's blue-500
+          backgroundColor: '#ffffff',
+          arrowColor: '#ffffff',
+          textColor: '#1f2937', // Tailwind's gray-800
+          overlayColor: 'rgba(0, 0, 0, 0.5)',
           zIndex: 10000,
+        },
+        tooltip: {
+          borderRadius: '0.5rem',
+          fontSize: '0.875rem',
+        },
+        buttonNext: {
+          backgroundColor: '#27272A', // Tailwind's blue-500
+          color: '#ffffff',
+          fontSize: '0.875rem',
+          fontWeight: 'bold',
+          padding: '0.5rem 1rem',
+          borderRadius: '0.25rem',
+        },
+        buttonBack: {
+          color: '#4b5563', // Tailwind's gray-600
+          marginRight: '0.5rem',
+        },
+        buttonSkip: {
+          color: '#4b5563', // Tailwind's gray-600
         },
       }}
       callback={handleJoyrideCallback}
