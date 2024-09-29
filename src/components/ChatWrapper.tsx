@@ -22,14 +22,11 @@ interface ChatWrapperProps {
   sessionId: string;
   initialMessages: Message[];
   isAlreadyIndexed: boolean;
-
 }
 
 export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, isAlreadyIndexed }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(!isAlreadyIndexed);
-  console.log(isAlreadyIndexed)
-
   const [loadingProgress, setLoadingProgress] = useState(0);
   const { messages, handleInputChange, handleSubmit, input, setInput } = useChat({
     api: "/api/chat-stream",
@@ -64,12 +61,16 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
   }, [messages]);
 
   useEffect(() => {
+    console.log('isAlreadyIndexed:', isAlreadyIndexed);
+    console.log('isLoading:', isLoading);
+
     const initializeChat = async () => {
-      for (let i = 0; i < 5; i++) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setLoadingProgress(prev => Math.min(prev + 20, 100));
+      if (!isAlreadyIndexed) {
+        for (let i = 0; i < 5; i++) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          setLoadingProgress(prev => Math.min(prev + 20, 100));
+        }
       }
-      await new Promise(resolve => setTimeout(resolve, 800));
       setIsLoading(false);
     };
 
@@ -85,7 +86,9 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
     }
   };
 
-  if (isLoading) {
+  console.log('Render - isLoading:', isLoading, 'isAlreadyIndexed:', isAlreadyIndexed);
+
+  if (isLoading && !isAlreadyIndexed) {
     return <LoadingPage progress={loadingProgress} />;
   }
 
