@@ -7,7 +7,7 @@
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  transition: all 0.2s ease-out;
+  transition: all 0.2ms ease-out;
 
 }
 
@@ -16,6 +16,8 @@ body {
   /* --sb-track-color: #ffffff; */
   /* --sb-thumb-color: #000000; */
 }
+
+
 
 
 @layer base {

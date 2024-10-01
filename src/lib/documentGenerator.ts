@@ -9,6 +9,7 @@ interface GeneratedContent {
   introduction: string;
   mainContent: { heading: string; paragraphs: string[] }[];
   conclusion: string;
+  references: string[]; // New field for references
 }
 
 export async function generateDocument(type: string, url: string, userId: string) {
@@ -42,10 +43,11 @@ export async function generateDocument(type: string, url: string, userId: string
     Main Content:
     Include at least three main sections, each with a heading and 1-2 paragraphs. Format each section like this:
     
+    Heading 1: 
     [Paragraph about the first main point]
     [Another paragraph about the first main point if needed]
 
-    [Heading 2:  
+    Heading 2:  
     [Paragraph about the second main point]
     [Another paragraph about the second main point if needed]
 
@@ -54,6 +56,18 @@ export async function generateDocument(type: string, url: string, userId: string
     [Another paragraph about the third main point if needed]
 
     Conclusion: A brief conclusion summarizing the main points discussed on this webpage
+
+    References:
+    - Include a list of references used in the content, citing specific pages or sections within the ${url} website.
+    - Each reference should be on a new line and in the format: [Page Title or Section Name] (${url}/specific-page-path)
+    - Ensure that all information in the main content is supported by these references.
+    - Always include the main URL (${url}) as a general reference at the end of the reference list.
+
+    Important:
+    1. Use information only from the provided URL and its subpages.
+    2. Do not include any external sources or made-up information.
+    3. If you can't find enough information on a particular point, simply state that the information is not available on the website.
+    4. Make sure to include the References section in your output.
   `;
 
     const cacheKey = `document:${type}:${userId}:${url}`;
@@ -94,11 +108,12 @@ export async function generateDocument(type: string, url: string, userId: string
 }
 
 function parseGeneratedContent(output: string): GeneratedContent {
-  const sections = output.split(/\n(?=Title:|Introduction:|Heading \d+:|Conclusion:)/);
+  const sections = output.split(/\n(?=Title:|Introduction:|Heading \d+:|Conclusion:|References:)/);
   let title = '';
   let introduction = '';
   let conclusion = '';
   let mainContent: { heading: string; paragraphs: string[] }[] = [];
+  let references: string[] = [];
 
   sections.forEach(section => {
     const [heading, ...content] = section.split('\n');
@@ -115,15 +130,18 @@ function parseGeneratedContent(output: string): GeneratedContent {
         heading: heading.trim(),
         paragraphs: sectionContent.split('\n\n').map(p => p.trim())
       });
+    } else if (heading.toLowerCase().includes('references')) {
+      references = sectionContent.split('\n').map(ref => ref.trim()).filter(ref => ref !== '');
     }
   });
 
-  console.log('Parsed content:', { title, introduction, mainContent, conclusion });
+  console.log('Parsed content:', { title, introduction, mainContent, conclusion, references });
 
   return {
     title,
     introduction,
     mainContent,
-    conclusion
+    conclusion,
+    references
   };
 }

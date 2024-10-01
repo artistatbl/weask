@@ -15,16 +15,54 @@ interface PageProps {
   };
 }
 
+interface RecentUrl {
+  id: string;
+  url: string;
+  title: string;
+  visitedAt: Date;
+}
+
 function reconstructUrl({ url }: { url: string[] }) {
   const decodedComponents = url.map((component) => decodeURIComponent(component));
-  const result = decodedComponents.join('/').replace(/^https:\//, 'https://');
+  const result = decodedComponents.join('/').replace(/^https:\/+/, 'https://');
   console.log("Reconstructed URL:", result);
   return result;
 }
 
+function generateUrlTitle(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    const hostParts = urlObj.hostname.split('.');
+    const domain = hostParts.length > 1 ? hostParts[hostParts.length - 2] : hostParts[0];
+    const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+    
+    // Generate prefix from domain
+  
+    // If prefix is empty (e.g., for numeric domains), use first 3 letters of domain
+    const prefix = domain.slice(0, 3).toUpperCase();
+
+
+    let content = '';
+    if (pathSegments.length > 0) {
+      content = pathSegments[pathSegments.length - 1]
+        .replace(/[-_]/g, ' ')  // Replace hyphens and underscores with spaces
+        .replace(/\.[^/.]+$/, '')  // Remove file extension if present
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())  // Capitalize each word
+        .join(' ');
+    }
+
+    let title = content ? `${prefix}: ${content}` : prefix;
+    return title.length > 30 ? title.substring(0, 27) + '...' : title;  // Truncate if too long
+  } catch (error) {
+    console.error("Error generating URL title:", error);
+    return url.substring(0, 30);  // Fallback to truncated URL if parsing fails
+  }
+}
+
 const Page = async ({ params }: PageProps) => {
   const user = await currentUser();
-  console.log("Current user:", user ? user.id : "Not authenticated");
+  // console.log("Current user:", user ? user.id : "Not authenticated");
 
   if (!user) {
     console.log("Redirecting to sign in");
@@ -38,7 +76,7 @@ const Page = async ({ params }: PageProps) => {
   try {
     console.log("Checking if URL is already indexed");
     const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl) === 1;
-    console.log("Is URL already indexed:", isAlreadyIndexed);
+    // console.log("Is URL already indexed:", isAlreadyIndexed);
 
     console.log("Fetching user from database");
     const dbUser = await prisma.user.findUnique({
@@ -62,24 +100,57 @@ const Page = async ({ params }: PageProps) => {
       createdAt: msg.createdAt,
     }));
 
+    // Fetch recent URLs
+    console.log("Fetching recent URLs");
+    const recentSearchHistories = await prisma.searchHistory.findMany({
+      where: { userId: dbUser.id },
+      orderBy: { createdAt: 'desc' },
+      take: 10,  // Fetch more to account for potential duplicates
+      select: {
+        id: true,
+        domain: true,
+        createdAt: true,
+      },
+    });
+
+    // Normalize URLs and remove duplicates
+    const normalizedUrls = new Map<string, RecentUrl>();
+    recentSearchHistories.forEach(history => {
+      const normalizedUrl = new URL(history.domain).toString();
+      if (!normalizedUrls.has(normalizedUrl)) {
+        normalizedUrls.set(normalizedUrl, {
+          id: history.id,
+          url: normalizedUrl,
+          title: generateUrlTitle(normalizedUrl),
+          visitedAt: history.createdAt,
+        });
+      }
+    });
+
+    const recentUrls: RecentUrl[] = Array.from(normalizedUrls.values()).slice(0, 5);
+
+    
+
     if (!isAlreadyIndexed) {
-      console.log("URL not indexed, starting indexing process");
+      // console.log("URL not indexed, starting indexing process");
       try {
         const RagChatComponent = await ragChat;
         if (RagChatComponent && RagChatComponent.context && RagChatComponent.context.add) {
           await RagChatComponent.context.add({
             type: "html",
             source: reconstructedUrl,
-            config: { chunkOverlap: 50, chunkSize: 200 },
+            config: { chunkOverlap: 50, chunkSize: 200 , },
           });
           await redis.sadd("indexed-urls", reconstructedUrl);
-          console.log("URL indexed successfully");
+          // console.log("URL indexed successfully");
         } else {
           console.error("RagChat or its context is not available");
         }
       } catch (error) {
         console.error("Error during indexing:", error);
       }
+    } else {
+      console.log("URL already indexed, skipping indexing process");
     }
 
     console.log("Saving search history");
@@ -91,6 +162,7 @@ const Page = async ({ params }: PageProps) => {
         sessionId={sessionId}
         initialMessages={initialMessages}
         isAlreadyIndexed={isAlreadyIndexed}
+        recentUrls={recentUrls}
       />
     );
   } catch (error: any) {

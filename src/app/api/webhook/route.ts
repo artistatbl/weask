@@ -79,12 +79,12 @@ export async function POST(req: Request) {
         const user = await upsertUser(payload.data);
 
         // Check if the user already has a subscription
-        const existingSubscription = await prisma.subscriptions.findFirst({
+        const existingSubscription = await prisma.subscription.findFirst({
           where: { clerkId: user.clerkId },
         });
 
         if (!existingSubscription) {
-          await prisma.subscriptions.create({
+          await prisma.subscription.create({
             data: {
               subscriptionId: `sub_${user.id}_${Date.now()}`,
               stripeuserId: `cus_${user.id}`,

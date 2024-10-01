@@ -79,15 +79,19 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
               </div>
               <div className="w-3/4 flex flex-col">
                 <CustomSkeleton className="w-3/4 h-8 mb-4 rounded-lg" />
-                {[...Array(4)].map((_, i) => (
+                {[...Array(5)].map((_, i) => (
                   <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
                 ))}
                 <CustomSkeleton className="w-full h-48 mb-4 rounded-lg" />
-                {[...Array(4)].map((_, i) => (
+                {[...Array(6)].map((_, i) => (
                   <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
                 ))}
                   <CustomSkeleton className="w-full h-48 mb-4 rounded-lg" />
-                {[...Array(4)].map((_, i) => (
+                {/* {[...Array(4)].map((_, i) => (
+                  <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
+                ))} */}
+                 <CustomSkeleton className="w-full h-48 mb-4 rounded-lg" />
+                 {[...Array(5)].map((_, i) => (
                   <CustomSkeleton key={i} className="w-full h-4 mb-2 rounded-lg" />
                 ))}
               </div>
@@ -100,17 +104,17 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
           key={iframeKey}
           src={url}
           title="Website Preview"
-          className="w-full h-full border-0"
+          className="w-full h-full  border-0"
           onLoad={handleIframeLoad}
           onError={handleIframeError}
         />
       )}
       {!isLoading && (error || !isEmbeddable) && (
-        <div className="absolute inset-0 flex items-center justify-center bg-zinc-800 text-white p-4 text-center">
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 text-white p-4 text-center">
           <div className="flex flex-col items-center">
-            <AlertCircle className="w-20 h-20 text-red-500 mb-4" />
-            <p>{error || "This website cannot be embedded."}</p>
-            <a href={url} target="_blank" rel="noopener noreferrer" className="mt-2 text-blue-400 hover:underline">
+            <AlertCircle className="w-24 h-24 text-red-500 mb-4" />
+            <p className='text-xl'>{error || "This website cannot be embedded."}</p>
+            <a href={url} target="_blank" rel="noopener noreferrer" className="mt-2 text-blue-400 text-md hover:underline">
               Open website in new tab
             </a>
           </div>

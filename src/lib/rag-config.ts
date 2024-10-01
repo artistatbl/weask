@@ -2,23 +2,36 @@ import { upstash, openai } from "@upstash/rag-chat";
 import { redis } from "./redis";
 
 function getMaxTokens(query: string): number {
-  // Adjust token allocation based on typical query lengths and complexity
-  if (query.length > 100) {
-    return 300; // Reduced from 400
+  // Adjust token allocation based on query length and complexity
+  if (query.length > 150) {
+    return 400;
+  } else if (query.length > 100) {
+    return 300;
   }
-  return 150; // Reduced from 200
+  return 200;
 }
 
-export const ragConfig = (query: string) => ({
+function getTemperature(query: string): number {
+  // Adjust temperature based on query characteristics
+  if (query.toLowerCase().includes("explain") || query.toLowerCase().includes("how")) {
+    return 0.7; // Higher temperature for explanations
+  }
+  return 0.5; // Lower temperature for factual responses
+}
+
+export const ragConfig = (query: string, indexedUrl: string) => ({
   model: upstash("mistralai/Mistral-7B-Instruct-v0.2"),
 
   redis: redis,
   retrievalOptions: {
-    topK: 2, // Reduce from 5 to 3 to limit context size
-    minScore: 0.75,
+    topK: 3, // Retrieve top 3 most relevant chunks
+    minScore: 0.7, // Increased from 0.75 to allow slightly less relevant but potentially useful information
   },
   modelOptions: {
-    max_tokens: getMaxTokens(query), // Dynamic token allocation
-    temperature: 0.7,
+    max_tokens: getMaxTokens(query),
+    temperature: getTemperature(query),
   },
+  systemPrompt: `You are an AI assistant focused on providing information about the content from ${indexedUrl}. 
+    Your primary goal is to answer questions based on this content. If a question is unrelated, 
+    politely redirect the user to the topic of the indexed URL. Always strive to be helpful and informative.`,
 });

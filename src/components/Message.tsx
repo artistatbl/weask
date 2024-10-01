@@ -6,9 +6,10 @@ import Image from "next/image";
 interface MessageProps {
   content: string;
   isUserMessage: boolean;
+  aiState?: 'thinking' | 'responding' | null;
 }
 
-export const Message = ({ content, isUserMessage }: MessageProps) => {
+export const Message = ({ content, isUserMessage, aiState }: MessageProps) => {
   const { user } = useUser();
   const userAvatarUrl = user?.imageUrl;
 
@@ -26,7 +27,7 @@ export const Message = ({ content, isUserMessage }: MessageProps) => {
         >
           {isUserMessage && (
             <div className="absolute left-2 top-2">
-              <div className="size-6 rounded-full border border-zinc-600 bg-blue-950 flex justify-center items-center overflow-hidden">
+              <div className="size-6 rounded-full border border-zinc-600 bg-orange-800 flex justify-center items-center overflow-hidden">
                 {userAvatarUrl ? (
                   <Image src={userAvatarUrl} alt="User" width={24} height={24} />
                 ) : (
@@ -36,6 +37,18 @@ export const Message = ({ content, isUserMessage }: MessageProps) => {
             </div>
           )}
           <div className={cn("", { "ml-8": isUserMessage })}>
+            {aiState && (
+              <div className="flex items-center space-x-2 text-zinc-400 mb-2">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                  <div className="w-2 h-2 bg-orange-600  rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-orange-600  rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+                <span className="font-medium text-orange-600">
+                  {aiState === 'thinking' ? 'Thinking...' : 'Responding...'}
+                </span>
+              </div>
+            )}
             <pre className="whitespace-pre-wrap">{content}</pre>
           </div>
         </div>

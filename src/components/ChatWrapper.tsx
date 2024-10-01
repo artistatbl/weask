@@ -18,22 +18,32 @@ import { GripVertical } from 'lucide-react';
 import ErrorBoundary from "@/hooks/Error-Boundary";
 import LoadingPage from "@/components/LoadingPage";
 
+interface RecentUrl {
+  id: string;
+  url: string;
+  title: string;
+  visitedAt: Date;
+}
+
 interface ChatWrapperProps {
   sessionId: string;
   initialMessages: Message[];
   isAlreadyIndexed: boolean;
+  recentUrls: RecentUrl[];
 }
 
-export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, isAlreadyIndexed }) => {
+export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, isAlreadyIndexed, recentUrls }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(!isAlreadyIndexed);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const { messages, handleInputChange, handleSubmit, input, setInput } = useChat({
     api: "/api/chat-stream",
     body: { sessionId },
     initialMessages: initialMessages.map(msg => ({ ...msg, id: msg.id.toString() })),
     onFinish: async (message) => {
       await saveChatMessage(sessionId, { ...message, id: message.id || uuidv4() } as Message);
+      setIsChatLoading(false);
     },
     onError: (error) => {
       console.error("Chat error:", error);
@@ -42,6 +52,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
         description: "An error occurred while sending your message",
         variant: "destructive",
       });
+      setIsChatLoading(false);
     },
   });
 
@@ -61,14 +72,11 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
   }, [messages]);
 
   useEffect(() => {
-    console.log('isAlreadyIndexed:', isAlreadyIndexed);
-    console.log('isLoading:', isLoading);
-
     const initializeChat = async () => {
       if (!isAlreadyIndexed) {
         for (let i = 0; i < 5; i++) {
           await new Promise(resolve => setTimeout(resolve, 1000));
-          setLoadingProgress(prev => Math.min(prev + 10, 100));
+          setLoadingProgress(prev => Math.min(prev + 20, 100));
         }
       }
       setIsLoading(false);
@@ -86,7 +94,11 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
     }
   };
 
-  console.log('Render - isLoading:', isLoading, 'isAlreadyIndexed:', isAlreadyIndexed);
+  const handleChatSubmit: typeof handleSubmit = (e, chatRequestOptions) => {
+    setIsChatLoading(true);
+    handleSubmit(e, chatRequestOptions);
+    setTimeout(scrollToBottom, 500);
+  };
 
   if (isLoading && !isAlreadyIndexed) {
     return <LoadingPage progress={loadingProgress} />;
@@ -94,7 +106,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
 
   return (
     <div className="flex h-screen w-full body">
-      <HomeSidebar />
+      <HomeSidebar recentUrls={recentUrls} />
       <PanelGroup direction="horizontal" className="flex-1">
         <Panel defaultSize={50} minSize={30}>
           <div className="flex flex-col h-full">
@@ -103,7 +115,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
             <ScrollArea ref={scrollAreaRef} className="flex-1 h-[calc(100vh-8rem)] bg-zinc-800">
               <div className="p-2 mb-32">
                 <ErrorBoundary fallback={<div>Error rendering messages</div>}>
-                  <Messages messages={messages} />
+                  <Messages messages={messages} isLoading={isChatLoading} />
                 </ErrorBoundary>
               </div>
             </ScrollArea>
@@ -111,11 +123,9 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
               <ChatInput
                 input={input}
                 handleInputChange={handleInputChange}
-                handleSubmit={(e) => {
-                  handleSubmit(e);
-                  setTimeout(scrollToBottom, 500);
-                }}
+                handleSubmit={handleChatSubmit}
                 setInput={setInput}
+                isLoading={isChatLoading}
               />
             </div>
           </div>

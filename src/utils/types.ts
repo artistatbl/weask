@@ -4,3 +4,10 @@ export interface Message {
   content: string;
   createdAt?: Date;
 }
+
+export interface Links {
+  label: string;
+  href: string;
+  icon: React.ReactNode;
+  textColor?: string;
+}

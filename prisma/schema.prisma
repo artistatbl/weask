@@ -44,9 +44,9 @@ model SearchHistory {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, sessionId, domain])
   @@index([userId, domain])
 }
-
 model Subscription {
   id                      String   @id @default(uuid())
   createdtime             DateTime @default(now())

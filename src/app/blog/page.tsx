@@ -3,10 +3,7 @@ import { urlFor } from '@/sanity/lib/image';
 import { groq } from 'next-sanity';
 import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from '@/components/global/navbar';
-import Footer from '@/components/global/footer';
 
-// Define the type for our blog post
 interface Post {
   _id: string;
   title: string;
@@ -17,7 +14,6 @@ interface Post {
   author: { name: string; image: any };
 }
 
-// Updated query to fetch all blog posts and global content
 const query = groq`
 {
   "posts": *[_type == "post"] | order(publishedAt desc) {
@@ -28,56 +24,72 @@ const query = groq`
     mainImage,
     excerpt,
     "author": author->{name, image}
-  },
-  "globals": *[_type == "global"]
+  }
 }
 `;
 
 export default async function BlogPage() {
-  const { posts, globals } = await client.fetch<{ posts: Post[], globals: any }>(query);
-  console.log(posts, globals);
+  const { posts } = await client.fetch<{ posts: Post[] }>(query);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <main className="flex-grow pt-16"> {/* Added pt-16 for navbar height */}
-        <div className="h-full flex flex-col items-center justify-start p-4">
-          <h1 className="text-3xl font-bold mb-4 text-center">Our Blog</h1>
-          <div className="w-full max-w-7xl overflow-y-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-3 gap-4">
-              {posts.map((post: Post) => (
-                <Link href={`/blog/${post.slug.current}`} key={post._id} className="group">
-                  <div className="bg-white rounded-lg border-2 border-gray-600 shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
-                    {post.mainImage && (
-                      <Image
-                        src={urlFor(post.mainImage).width(400).height(200).url()}
-                        alt={post.title}
-                        width={400}
-                        height={200}
-                        className="w-full h-32  object-cover"
-                      />
-                    )}
-                    <div className="p-3 flex-grow flex flex-col">
-                      <p className="text-gray-600 text-xs mb-1">
-                        {new Date(post.publishedAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </p>
-                      <h2 className="text-lg font-semibold mb-1 group-hover:text-blue-600 transition-colors">
-                        {post.title}
-                      </h2>
-                      <p className="text-gray-700 text-sm line-clamp-2 flex-grow">{post.excerpt}</p>
-                    </div>
+    <div className="min-h-screen  dark:bg-gray-900 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-center text-orange-600 dark:text-white">
+          Insights & Innovation
+        </h1>
+        <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-12">
+          Exploring the cutting edge of technology and beyond
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ">
+          {posts.map((post: Post) => (
+            <div key={post._id} className="bg-white border border-zinc-300 dark:bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-xl transition-all duration-300 flex flex-col">
+              <div className="relative">
+                {post.mainImage && (
+                  <div className="h-48 w-full overflow-hidden ">
+                    <Image
+                      src={urlFor(post.mainImage).width(750).height(440).url()}
+                      alt={post.title}
+                      layout="fill"
+
+                      className="transition-transform duration-300 hover:scale-105"
+                    />
                   </div>
+                )}
+                <div className="absolute top-2 right-2 flex items-center bg-white dark:bg-gray-800 rounded-full p-1 shadow-md">
+                  {post.author.image && (
+                    <Image
+                      src={urlFor(post.author.image).width(32).height(32).url()}
+                      alt={post.author.name}
+                      width={32}
+                      height={32}
+                      className="rounded-full"
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="p-6 flex-grow flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-semibold bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100 px-2 py-1 rounded-full">
+                    {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </span>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{post.author.name}</span>
+                </div>
+                <h2 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
+                  {post.title}
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 flex-grow">{post.excerpt}</p>
+                <Link href={`/blog/${post.slug.current}`} className="text-black bg-gray-100 p-2 border border-orange-600 rounded-lg text-center hover:text-orange-600 font-semibold text-sm">
+                  Read more 
                 </Link>
-              ))}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-      </main>
-      <Footer />
+      </div>
     </div>
   );
 }

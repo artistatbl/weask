@@ -11,6 +11,7 @@ import FAQ from "@/components/global/faq";
 import UrlForm from "@/components/UrlForm";
 import { SafariDemo } from "@/components/global/safari";
 import BentoCard from '@/components/global/bentoGrid';
+import { TextHoverEffectDemo } from "@/components/home/TextHoverEffect";
 
 export default function LandingPage() {
   return (
@@ -24,18 +25,16 @@ export default function LandingPage() {
         
         <section className="hero py-20 px-4">
           <div className="container mx-auto max-w-4xl text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mt-14  mb-2">
-              Chat with Any Website Instantly
+            <h1 className="text-4xl md:text-6xl text-zinc-900 font-medium mt-14 mb-2">
+              Chat with Any Website 
             </h1>
-            <p className="text-xl mb-8">
+            <span className="text-orange-600 md:text-6xl font-bold">Instantly</span>
+
+            <p className="text-md text-gray-600 mb-8 mt-1 font-extralight">
               Turn websites into interactive chats. Ask questions, get instant answers.
             </p>
-            {/* <CallToAction /> */}
             <UrlForm />
-            {/* <div className="mt-12">
             
-            <SafariDemo/>
-            </div> */}
 
 <div className="mt-8 w-full flex justify-center">
           <SafariDemo />
@@ -66,6 +65,7 @@ export default function LandingPage() {
       </main>
 
       <Footer />
+      {/* <TextHoverEffectDemo/> */}
     </div>
   );
 }

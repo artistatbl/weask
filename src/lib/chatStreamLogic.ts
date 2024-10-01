@@ -1,3 +1,5 @@
+// src/lib/chatStreamLogic.ts
+
 import { ragChat } from "@/lib/rag-chat";
 import { prisma } from "@/lib/db";
 import { ratelimitConfig } from "@/lib/rateLimiter";
@@ -7,7 +9,14 @@ import { retryWithBackoff } from "@/lib/retry-backoff";
 import { estimateTokens } from "@/lib/utils";
 import { RagChatResponse } from "@/types/ragChat";
 
-export async function processChatStream(user: server.User, messages: any[], sessionId: string, userPlan: string) {
+export async function processChatStream(user: server.User, messages: any[], sessionId: string, userPlan: string, indexedUrl: string) {
+  console.log("Received indexedUrl in processChatStream:", indexedUrl);
+
+  if (!indexedUrl) {
+    console.warn("indexedUrl is not provided, using a default value");
+    indexedUrl = "https://en.wikipedia.org/wiki/Main_Page"; // Or any other default URL
+  }
+
   if (ratelimitConfig.enabled && ratelimitConfig.ratelimit) {
     const { success, reset, remaining } = await ratelimitConfig.ratelimit.limit(user.id);
     const resetInMinutes = Math.ceil((reset - Date.now()) / 60000);
@@ -21,15 +30,18 @@ export async function processChatStream(user: server.User, messages: any[], sess
     }
   }
 
-  const lastMessage = messages[messages.length - 1].content;
-  const estimatedTokens = estimateTokens(lastMessage);
-
-  
-
   const dbUser = await prisma.user.findUnique({ where: { clerkId: user.id } });
   if (!dbUser) {
     throw { status: 404, message: "User not found in database" };
   }
+
+  // Updated context about the indexed URL
+  const urlContext = `This conversation is about the content from the URL: ${indexedUrl}. Please provide responses based on the information indexed from this URL. If the user's question is unrelated, politely redirect them to the topic of the indexed URL.`;
+  await ragChat.context.add(urlContext);
+  console.log("URL Context:", urlContext);
+
+  const lastMessage = messages[messages.length - 1].content;
+  const estimatedTokens = estimateTokens(lastMessage);
 
   await prisma.chatMessage.create({
     data: {
@@ -49,9 +61,14 @@ export async function processChatStream(user: server.User, messages: any[], sess
   }
 
   const result = await retryWithBackoff(async () => {
-    const response: RagChatResponse = await ragChat.chat(lastMessage, { streaming: true, sessionId, ...aiOptions });
+    const response: RagChatResponse = await ragChat.chat(lastMessage, { 
+      streaming: true, 
+      sessionId, 
+      ...aiOptions,
+      context: urlContext
+    });
     if ((response as any).usage && typeof (response as any).usage.total_tokens === 'number') {
-     // await tokenTracker.recordUsage((response as any).usage.total_tokens, estimatedTokens);
+      // await tokenTracker.recordUsage((response as any).usage.total_tokens, estimatedTokens);
     }
     return response;
   });

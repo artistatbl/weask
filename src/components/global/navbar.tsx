@@ -1,89 +1,136 @@
-'use client'
+"use client"
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { MenuIcon } from 'lucide-react';
-// import { UserButton } from '@clerk/nextjs';
-// import Button from '../cartoon/Button'; 
-
-
-// Adjust the path to where you save Button.tsx
-// import { ModeToggle } from '@/components/global/mode-toggle';
+import { Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import classnames from "classnames"
-// import { currentUser } from "@clerk/nextjs/server";
-import { UserButton } from '@clerk/nextjs';
+import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+import { Button } from "@/components/ui/button"
 
-
-type Props = {
-  
+type NavItem = {
+  name: string;
+  href: string;
 };
 
+const navItems: NavItem[] = [
+  { name: 'Home', href: '/' },
+  // { name: 'Features', href: '/features' },
+  { name: 'Pricing', href: '/pricing' },
+  { name: 'Blog', href: '/blog' },
+];
 
+const Navbar = () => {
+  const currentPath = usePathname();
 
-const Navbar =  async  ( props: Props) => {
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return currentPath === href;
+    }
+    return currentPath.startsWith(href);
+  };
 
-// const user = await currentUser()
-
-   const currentPath = usePathname();
   return (
-    <header className="fixed right-0 text-gray-500 dark:text-white  dark:bg-neutral-950 left-0 top-0 py-4 px-4 bg-white backdrop-blur-lg z-[100] flex items-center   justify-between">
-      <aside className="flex ml-10 items-center gap-[2px] text-black dark:text-white">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zap"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
-
-        <p className="text-lg  font-extrabold">Nexus</p>
-        {/* <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zap"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> */}
-        <p className="text-lg  font-extrabold">Flow</p>
-      </aside>
-      <nav className="absolute left-[50%] top-[50%] transform translate-x-[-50%] translate-y-[-50%] hidden md:block">
-        <ul className="flex items-center gap-4 ml-12 list-none font-semibold">
-          <li>
-            <Link href="/"
-              className={classnames({
-                "text-black dark:text-white relative": currentPath === "/",
-                "text-neutral-500 dark:text-neutral-400": currentPath !== "/",
-              })}
-            >
-              Home
-              {currentPath === "/" && <span className="absolute left-0 right-0 bottom-[-10px] h-1 w-1 bg-black dark:bg-white rounded-full mx-auto"></span>}
-            </Link>
-          </li>
-          <li>
-            <Link href="/pricing"
-              className={classnames({
-                "text-black dark:text-white relative": currentPath === "/pricing",
-                "text-neutral-500 dark:text-neutral-400": currentPath !== "/pricing",
-              })}
-            >
-              Pricing
-              {currentPath === "/pricing" && <span className="absolute left-0 right-0 bottom-[-10px] h-1 w-1 bg-black dark:bg-white rounded-full mx-auto"></span>}
-            </Link>
-          </li>
-          <li>
-            <Link href="/blog"
-              className={classnames({
-                "text-black dark:text-white relative": currentPath === "/blog",
-                "text-neutral-500 dark:text-neutral-400": currentPath !== "/blog",
-              })}
-            >
-              Blog
-              {currentPath === "/blog" && <span className="absolute left-0 right-0 bottom-[-10px] h-1 w-1 bg-black dark:bg-white rounded-full mx-auto"></span>}
-            </Link>
-          </li>
-        </ul>
-      </nav>
-      <aside className="flex items-center gap-4">
-        {/* <Button>
-        </Button> */}
-         
-        {/* {user ? <UserButton afterSignOutUrl="/" /> : null} */}
-        <MenuIcon className="md:hidden" />
-        {/* <ModeToggle /> */}
-        <UserButton/>
-
-
-      </aside>
-    </header>
+    <nav className="bg-white border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link href="/" className="flex items-center">
+                <svg className="h-8 w-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+                <span className="ml-2 text-xl font-bold text-gray-900">NexusFlow</span>
+              </Link>
+            </div>
+          </div>
+          <div className="hidden sm:ml-6 sm:flex pr-40 sm:space-x-8">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive(item.href)
+                    ? 'border-orange-500 text-gray-900'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>
+          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+            <SignedOut>
+              <Link className='border border-orange-600 rounded-lg' href="/sign-in">
+                <Button variant="outline">Sign In</Button>
+              </Link>
+            </SignedOut>
+          </div>
+          <div className="flex items-center sm:hidden">
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>
+                    <div className="flex items-center">
+                      <svg className="h-8 w-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                      </svg>
+                      <span className="ml-2 text-xl font-bold text-gray-900">NexusFlow</span>
+                    </div>
+                  </DrawerTitle>
+                </DrawerHeader>
+                <div className="px-4 py-2">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={`block px-3 py-2 rounded-md text-base font-medium ${
+                        isActive(item.href)
+                          ? 'bg-orange-50 text-orange-700'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+                <DrawerFooter>
+                  <div className="flex justify-between items-center">
+                    <SignedIn>
+                      <UserButton afterSignOutUrl="/" />
+                    </SignedIn>
+                    <SignedOut>
+                      <Link href="/sign-in">
+                        <Button variant="outline">Sign In</Button>
+                      </Link>
+                    </SignedOut>
+                    <DrawerClose asChild>
+                      <Button variant="outline">Close</Button>
+                    </DrawerClose>
+                  </div>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
+          </div>
+        </div>
+      </div>
+    </nav>
   );
 };
 

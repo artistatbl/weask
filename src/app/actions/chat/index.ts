@@ -85,6 +85,9 @@ export const saveChatMessage = async (sessionId: string, message: Message) => {
   }
 };
 
+
+
+
 export const saveSearchHistory = async (url: string, sessionId: string) => {
   const user = await currentUser();
   if (!user) return { status: 401 };
@@ -98,8 +101,18 @@ export const saveSearchHistory = async (url: string, sessionId: string) => {
       return { status: 404, message: "User not found in database" };
     }
 
-    await prisma.searchHistory.create({
-      data: {
+    await prisma.searchHistory.upsert({
+      where: {
+        userId_sessionId_domain: {
+          userId: dbUser.id,
+          sessionId: sessionId,
+          domain: url,
+        },
+      },
+      update: {
+        createdAt: new Date(), // Update the timestamp if the record exists
+      },
+      create: {
         userId: dbUser.id,
         domain: url,
         sessionId: sessionId,

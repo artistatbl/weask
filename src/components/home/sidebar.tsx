@@ -1,57 +1,71 @@
-"use client";
-import React, { useState } from "react";
+import React from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
 import {
-  IconArrowLeft,
   IconBrandTabler,
-  IconSettings,
-  IconUserBolt,
-  IconMessage,
+  IconLink,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { Links } from "@/utils/types";
 
-export function HomeSidebar() {
-  const [open, setOpen] = useState(false);
+interface RecentUrl {
+  id: string;
+  url: string;
+  title: string;
+  visitedAt: Date;
+}
+
+// interface SidebarLinkProps {
+//   link: Links;
+//   className?: string;
+//   props?: InternalLinkProps;
+// }
+
+interface HomeSidebarProps {
+  recentUrls: RecentUrl[];
+}
+
+export function HomeSidebar({ recentUrls }: HomeSidebarProps) {
+  const [open, setOpen] = React.useState(false);
   const { user } = useUser();
-  const fullName: string = user ? `${user.firstName} ${user.lastName}` : ""; // Updated to provide type annotation and avoid self-reference
 
-  // Placeholder for chat history
-  const chatHistory = [
-    { id: 1, title: "Recent Chat 1", date: "2023-04-15" },
-    { id: 2, title: "Recent Chat 2", date: "2023-04-14" },
-    { id: 3, title: "Older Chat 1", date: "2023-04-10" },
-  ];
+  // console.log("Rendering sidebar with recent URLs:", recentUrls);
+
+  const fullName: string = user ? `${user.firstName} ${user.lastName}` : "";
 
   return (
     <Sidebar open={open} setOpen={setOpen}>
       <SidebarBody className="justify-between gap-6">
-        <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="flex flex-col flex-1 text-orange-600 overflow-y-auto overflow-x-hidden">
           <Logo />
-          <nav className="mt-6 flex flex-col gap-2">
+          <nav className="mt-6 flex font-extralight text-orange-500 flex-col gap-2">
             <SidebarLink
               link={{
+                textColor: "text-orange-500",
+
                 label: "New Chat",
                 href: "#",
                 icon: (
-                  <IconBrandTabler className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+                  <IconBrandTabler className="text-orange-600 h-5 w-5 flex-shrink-0" />
                 ),
               }}
             />
          
             <div className="mt-4 transition-all duration-300 ease-in-out">
               {open && (
-                <h3 className="px-3 text-xs font-semibold text-zinc-950  font-serif tracking-wider">Recent Chats</h3>
+                <h3 className=" text-xs  text-white font-bold tracking-wider mb-1">Recents</h3>
               )}
-              {chatHistory.map((chat) => (
+              {recentUrls.map((recentUrl) => (
                 <SidebarLink
-                  key={chat.id}
+                className=" rounded-md hover:bg-zinc-900 pl-1 "
+                  key={recentUrl.id}
                   link={{
-                    label: chat.title,
-                    href: `#${chat.id}`,
+                    label: recentUrl.title,
+                    textColor: "text-xs text-gray-300  font-extralight ",
+                    href: `/chat/${encodeURIComponent(recentUrl.url)}`,
                     icon: (
-                      <IconMessage className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+                      <IconLink className="text-gray-300  h-4 w-4 flex-shrink-0" />
                     ),
                   }}
                 />
@@ -60,28 +74,33 @@ export function HomeSidebar() {
           </nav>
         </div>
         <div>
-          <SidebarLink
-            link={{
-              label: fullName,
-              href: "#",
-              icon: (
-                <UserButton/>
-              ),
-            }}
-          />
+          {user && (
+            <SidebarLink
+              link={{
+                label: fullName,
+                href: "#",
+                icon: (
+                  <UserButton/>
+                ),
+              }}
+            />
+          )}
         </div>
       </SidebarBody>
     </Sidebar>
   );
 }
 
+// ... rest of the code remains the same
+// ... rest of the code remains the same
+
 const Logo = () => {
   return (
     <Link
       href="#"
-      className="font-normal flex space-x-2 items-center text-sm text-black dark:text-white py-1 relative z-20"
+      className="font-normal flex space-x-2 items-center text-sm text-white dark:text-white py-1 relative z-20"
     >
-      <div className="h-5 w-6 bg-white dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <div className="h-5 w-6 bg-orange-600 dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
