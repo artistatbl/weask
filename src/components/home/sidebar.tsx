@@ -7,7 +7,7 @@ import {
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { Links } from "@/utils/types";
+
 
 interface RecentUrl {
   id: string;
@@ -16,11 +16,7 @@ interface RecentUrl {
   visitedAt: Date;
 }
 
-// interface SidebarLinkProps {
-//   link: Links;
-//   className?: string;
-//   props?: InternalLinkProps;
-// }
+
 
 interface HomeSidebarProps {
   recentUrls: RecentUrl[];

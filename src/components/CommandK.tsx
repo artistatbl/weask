@@ -1,8 +1,8 @@
 "use client"
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { FileText, File, Copy, X } from 'lucide-react'
+import { FileText, File, Copy, X, Search } from 'lucide-react'
 import {
   CommandDialog,
   CommandInput,
@@ -16,6 +16,18 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import LoadingSpinner from '@/components/home/LoadingGenerate'
+import  {saveSearchHistory}  from '@/app/actions/chat'
+import { getSearchHistory } from '@/lib/getSearchHistory'
+
+
+
+interface SearchHistoryItem {
+  id: string;
+  url: string;
+  title: string;
+  visitedAt: string;
+}
+
 
 interface GeneratedContent {
   title?: string;
@@ -34,6 +46,10 @@ export function CommandK() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+
+
   const router = useRouter()
   const pathname = usePathname()
   const { toast } = useToast()
@@ -61,6 +77,55 @@ export function CommandK() {
   }, [pathname]);
 
   useEffect(() => {
+    const fetchSearchHistory = async () => {
+      console.log('Fetching search history...');
+      const result = await getSearchHistory()
+      console.log('Search history fetch result:', result);
+      if (result.status === 200) {
+        setSearchHistory(result.data)
+        console.log('Search history set:', result.data);
+      } else {
+        console.error('Failed to fetch search history:', result.message);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch search history',
+          variant: 'destructive',
+        })
+      }
+    }
+    fetchSearchHistory()
+  }, [toast])
+
+  
+  const filteredSearchHistory = useMemo(() => {
+    console.log('Filtering search history. Current searchTerm:', searchTerm);
+    console.log('Current searchHistory:', searchHistory);
+    
+    if (!searchTerm) return searchHistory;
+
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    const filtered = searchHistory.filter(item => {
+      const lowerUrl = item.url.toLowerCase();
+      const lowerTitle = item.title.toLowerCase();
+      
+      // Check if the search term is part of the URL or title
+      if (lowerUrl.includes(lowerSearchTerm) || lowerTitle.includes(lowerSearchTerm)) {
+        return true;
+      }
+      
+      // Split the search term into words and check if any word matches
+      const searchWords = lowerSearchTerm.split(/\s+/);
+      return searchWords.some(word => 
+        lowerUrl.includes(word) || lowerTitle.includes(word)
+      );
+    });
+
+    console.log('Filtered search history:', filtered);
+    return filtered;
+  }, [searchHistory, searchTerm]);
+
+
+  useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
@@ -76,6 +141,15 @@ export function CommandK() {
     if (submittedUrl) {
       const newSessionId = `${submittedUrl}--${Date.now()}`.replace(/[^a-zA-Z0-9]/g, '')
       localStorage.setItem('currentSessionId', newSessionId)
+      setCurrentSessionId(newSessionId)
+
+      setIsSubmitting(true)
+      const saveResult = await saveSearchHistory(submittedUrl, newSessionId)
+      if (saveResult.status !== 200) {
+        console.error('Error saving search history:', saveResult.message)
+        console.log(saveSearchHistory)
+      }
+
       toast({
         title: 'Redirecting',
         description: "You're being redirected to the chatbox. Please wait...",
@@ -96,7 +170,6 @@ export function CommandK() {
       }
     }
   }
-
   const handleGenerate = async (type: string) => {
     setIsLoading(true)
     setOpen(false) // Close the command dialog
@@ -235,9 +308,32 @@ export function CommandK() {
           <h2 className="text-lg font-semibold">Chat with a Website</h2>
           <CommandUrlForm onSubmit={handleSubmit} initialUrl="" />
         </div>
-        <CommandInput placeholder="Type a command or search..." />
+        <CommandInput 
+          placeholder="Type a command or search..." 
+          value={searchTerm}
+          onValueChange={(value) => {
+            console.log('Search term changed:', value);
+            setSearchTerm(value);
+          }}
+        />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup heading="Recent Searches">
+            {filteredSearchHistory.map((item) => (
+              <CommandItem key={item.id} onSelect={() => handleSubmit(item.url)}>
+                <Search className="mr-2 h-4 w-4" />
+                <span className="flex-1 truncate">
+                  {item.title}
+                  <span className="ml-2 text-xs text-gray-400">
+                    {new URL(item.url).hostname}
+                  </span>
+                </span>
+                <span className="ml-auto text-xs text-gray-400">
+                  {new Date(item.visitedAt).toLocaleDateString()}
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
           <CommandGroup heading="Generate">
             <CommandItem onSelect={() => handleGenerate('essay')}>
               <FileText className="mr-2 h-4 w-4" />
@@ -250,7 +346,6 @@ export function CommandK() {
           </CommandGroup>
         </CommandList>
       </CommandDialog>
-
       <Dialog open={isLoading || dialogOpen} onOpenChange={(open) => {
         if (!open) {
           setDialogOpen(false);
@@ -284,7 +379,6 @@ export function CommandK() {
                   variant="ghost"
                   className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800"
                 >
-                  {/* <X className="h-4 w-4 sm:h-5 sm:w-5" /> */}
                 </Button>
               </div>
               <ScrollArea className="flex-grow px-2 sm:px-4 md:px-6 py-2 sm:py-4 h-[calc(95vh-8rem)]">
