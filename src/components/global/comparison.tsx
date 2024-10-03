@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, X, Zap, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, X, Sparkles } from 'lucide-react';
 
 const Comparison: React.FC = () => {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);

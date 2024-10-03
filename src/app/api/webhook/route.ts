@@ -4,9 +4,6 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 
-
-
-
 export async function POST(req: Request) {
   console.log("Webhook endpoint hit");
   
@@ -47,10 +44,17 @@ export async function POST(req: Request) {
     return new Response("Error occurred", { status: 400 });
   }
 
-  const { id } = evt.data;
   const eventType = evt.type;
 
-  async function upsertUser(userData: any) {
+  interface UserData {
+    id: string;
+    email_addresses: { email_address: string }[];
+    first_name: string;
+    last_name: string;
+    image_url: string;
+  }
+
+  async function upsertUser(userData: UserData) {
     const { id, email_addresses, first_name, last_name, image_url } = userData;
     const email = email_addresses[0]?.email_address;
 
@@ -101,11 +105,11 @@ export async function POST(req: Request) {
           status: 200,
           message: eventType === "user.created" ? "User created" : "User updated",
         });
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error processing user:", error);
         return NextResponse.json({
           status: 400,
-          message: error.message,
+          message: (error as Error).message,
         });
       }
 

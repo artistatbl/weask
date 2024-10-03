@@ -41,7 +41,6 @@ function generateUrlTitle(url: string): string {
     // If prefix is empty (e.g., for numeric domains), use first 3 letters of domain
     const prefix = domain.slice(0, 3).toUpperCase();
 
-
     let content = '';
     if (pathSegments.length > 0) {
       content = pathSegments[pathSegments.length - 1]
@@ -52,7 +51,7 @@ function generateUrlTitle(url: string): string {
         .join(' ');
     }
 
-    let title = content ? `${prefix}: ${content}` : prefix;
+    const title = content ? `${prefix}: ${content}` : prefix;  // Changed from let to const
     return title.length > 30 ? title.substring(0, 27) + '...' : title;  // Truncate if too long
   } catch (error) {
     console.error("Error generating URL title:", error);
@@ -165,9 +164,9 @@ const Page = async ({ params }: PageProps) => {
         recentUrls={recentUrls}
       />
     );
-  } catch (error: any) {
+  } catch (error: unknown) {  // Changed from any to unknown
     console.error("Error in Page component:", error);
-    console.error("Error stack:", error.stack);
+    console.error("Error stack:", (error as Error).stack);
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error("Prisma error:", error.code, error.message);

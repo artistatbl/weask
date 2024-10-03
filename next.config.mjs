@@ -6,7 +6,9 @@ const nextConfig = {
     domains: ['img.clerk.com',
        'cdn.sanity.io',
       'images.unsplash.com',
-      'assets.aceternity.com'
+      'assets.aceternity.com',
+      'https://avatar.vercel.sh/jack',
+      'avatar.vercel.sh'
       ],
   },
 };

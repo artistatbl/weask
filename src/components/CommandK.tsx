@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { FileText, File, Copy, X, Search } from 'lucide-react'
+import { FileText, File, Copy, Search } from 'lucide-react'
 import {
   CommandDialog,
   CommandInput,
@@ -40,11 +40,9 @@ interface GeneratedContent {
 
 export function CommandK() {
   const [open, setOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null)
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([])
@@ -60,11 +58,6 @@ export function CommandK() {
   const isChatPage = useMemo(() => {
     return pathname?.startsWith('/chat/') || false
   }, [pathname])
-
-  useEffect(() => {
-    const sessionId = localStorage.getItem('currentSessionId');
-    setCurrentSessionId(sessionId);
-  }, []);
 
   useEffect(() => {
     const updateCurrentUrl = () => {
@@ -149,9 +142,9 @@ export function CommandK() {
     if (submittedUrl) {
       const newSessionId = `${submittedUrl}--${Date.now()}`.replace(/[^a-zA-Z0-9]/g, '')
       localStorage.setItem('currentSessionId', newSessionId)
-      setCurrentSessionId(newSessionId)
+      // setCurrentSessionId(newSessionId) // Remove this line
 
-      setIsSubmitting(true)
+      // setIsSubmitting(true) // Remove this line
       const saveResult = await saveSearchHistory(submittedUrl, newSessionId)
       if (saveResult.status !== 200) {
         console.error('Error saving search history:', saveResult.message)
@@ -173,7 +166,7 @@ export function CommandK() {
           variant: 'destructive',
         })
       } finally {
-        setIsSubmitting(false)
+        // setIsSubmitting(false) // Remove this line
         setOpen(false)
       }
     }

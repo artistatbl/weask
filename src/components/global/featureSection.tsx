@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { Tabs } from "../../components/ui/tabs";
-import { Code, Database, Zap, Cloud, Cpu } from "lucide-react";
+import {Database, Zap, Cloud} from "lucide-react";
 
 const tabs = [
   {

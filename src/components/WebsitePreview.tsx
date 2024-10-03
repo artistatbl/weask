@@ -17,7 +17,6 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEmbeddable, setIsEmbeddable] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [iframeKey, setIframeKey] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -101,7 +100,6 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
       )}
       {!isLoading && isEmbeddable && (
         <iframe
-          key={iframeKey}
           src={url}
           title="Website Preview"
           className="w-full h-full  border-0"

@@ -3,17 +3,30 @@ import { urlFor } from '@/sanity/lib/image';
 import { groq } from 'next-sanity';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PortableText } from '@portabletext/react';
+import { PortableText, PortableTextComponents } from '@portabletext/react';
 
 interface PostParams {
   params: { slug: string };
 }
 
+interface Author {
+  name: string;
+  image: {
+    asset: {
+      _ref: string;
+    };
+  };
+}
+
 interface Post {
   title: string;
-  mainImage: any;
-  body: any;
-  author: { name: string; image: any };
+  mainImage: {
+    asset: {
+      _ref: string;
+    };
+  };
+  body: any; // Assuming body is a complex structure, keeping it as any for now
+  author: Author;
   publishedAt: string;
 }
 
@@ -27,9 +40,9 @@ const query = groq`
   }
 `;
 
-const ptComponents = {
+const ptComponents: PortableTextComponents = {
   types: {
-    image: ({ value }: { value: any }) => {
+    image: ({ value }: { value: { asset: { _ref: string }; alt?: string } }) => {
       if (!value?.asset?._ref) {
         return null;
       }
@@ -46,21 +59,21 @@ const ptComponents = {
     },
   },
   block: {
-    h1: ({children}: any) => <h1 className="text-3xl font-bold mt-8 mb-4">{children}</h1>,
-    h2: ({children}: any) => <h2 className="text-2xl font-semibold mt-8 mb-4">{children}</h2>,
-    h3: ({children}: any) => <h3 className="text-xl font-semibold mt-6 mb-3">{children}</h3>,
-    normal: ({children}: any) => <p className="mt-4 leading-7">{children}</p>,
+    h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-3xl font-bold mt-8 mb-4">{children}</h1>,
+    h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-2xl font-semibold mt-8 mb-4">{children}</h2>,
+    h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-xl font-semibold mt-6 mb-3">{children}</h3>,
+    normal: ({ children }: { children?: React.ReactNode }) => <p className="mt-4 leading-7">{children}</p>,
   },
   list: {
-    bullet: ({children}: any) => <ul className="mt-4 list-disc list-inside">{children}</ul>,
-    number: ({children}: any) => <ol className="mt-4 list-decimal list-inside">{children}</ol>,
+    bullet: ({ children }: { children?: React.ReactNode }) => <ul className="mt-4 list-disc list-inside">{children}</ul>,
+    number: ({ children }: { children?: React.ReactNode }) => <ol className="mt-4 list-decimal list-inside">{children}</ol>,
   },
   listItem: {
-    bullet: ({children}: any) => <li className="mt-2">{children}</li>,
-    number: ({children}: any) => <li className="mt-2">{children}</li>,
+    bullet: ({ children }: { children?: React.ReactNode }) => <li className="mt-2">{children}</li>,
+    number: ({ children }: { children?: React.ReactNode }) => <li className="mt-2">{children}</li>,
   },
   marks: {
-    link: ({value, children}: any) => {
+    link: ({ value, children }: { value?: { href: string }; children?: React.ReactNode }) => {
       const target = (value?.href || '').startsWith('http') ? '_blank' : undefined;
       return (
         <a href={value?.href} target={target} rel={target === '_blank' ? 'noindex nofollow' : undefined} className="text-blue-500 hover:text-blue-600 transition-colors duration-200">

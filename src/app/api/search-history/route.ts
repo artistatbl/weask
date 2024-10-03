@@ -1,10 +1,10 @@
 // pages/api/search-history.ts or app/api/search-history/route.ts (depending on your Next.js setup)
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     console.log("Fetching search history...");
     const user = await currentUser();
@@ -54,10 +54,10 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(recentUrls);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching search history:", error);
     return NextResponse.json(
-      { error: "An unexpected error occurred.", details: error.message },
+      { error: "An unexpected error occurred.", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -82,7 +82,7 @@ function generateUrlTitle(url: string): string {
         .join(' ');
     }
 
-    let title = content ? `${prefix}: ${content}` : prefix;
+    const title = content ? `${prefix}: ${content}` : prefix;
     return title.length > 30 ? title.substring(0, 27) + '...' : title;
   } catch (error) {
     console.error("Error generating URL title:", error);

@@ -9,7 +9,7 @@ import { retryWithBackoff } from "@/lib/retry-backoff";
 import { estimateTokens } from "@/lib/utils";
 import { RagChatResponse } from "@/types/ragChat";
 
-export async function processChatStream(user: server.User, messages: any[], sessionId: string, userPlan: string, indexedUrl: string) {
+export async function processChatStream(user: server.User, messages: { content: string }[], sessionId: string, userPlan: string, indexedUrl: string) {
   console.log("Received indexedUrl in processChatStream:", indexedUrl);
 
   if (!indexedUrl) {
@@ -41,7 +41,6 @@ export async function processChatStream(user: server.User, messages: any[], sess
   console.log("URL Context:", urlContext);
 
   const lastMessage = messages[messages.length - 1].content;
-  const estimatedTokens = estimateTokens(lastMessage);
 
   await prisma.chatMessage.create({
     data: {

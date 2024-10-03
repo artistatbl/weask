@@ -1,6 +1,13 @@
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY = 1000; // Start with a 1-second delay
 
+interface RetryError extends Error {
+  status?: number;
+  headers?: {
+    'retry-after'?: string;
+  };
+}
+
 export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   retries = MAX_RETRIES,
@@ -8,9 +15,10 @@ export async function retryWithBackoff<T>(
 ): Promise<T> {
   try {
     return await fn();
-  } catch (error: any) {
-    if (error.status === 429 && retries > 0) {
-      const retryAfter = error.headers?.['retry-after'];
+  } catch (error) {
+    const retryError = error as RetryError;
+    if (retryError.status === 429 && retries > 0) {
+      const retryAfter = retryError.headers?.['retry-after'];
       const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : delay;
       console.log(`Rate limit hit, retrying in ${waitTime / 1000} seconds...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));

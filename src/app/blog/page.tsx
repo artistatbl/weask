@@ -4,14 +4,26 @@ import { groq } from 'next-sanity';
 import Link from 'next/link';
 import Image from 'next/image';
 
+interface ImageType {
+  asset: {
+    _ref: string;
+    _type: string;
+  };
+}
+
+interface Author {
+  name: string;
+  image: ImageType;
+}
+
 interface Post {
   _id: string;
   title: string;
   slug: { current: string };
   publishedAt: string;
-  mainImage: any;
+  mainImage: ImageType;
   excerpt: string;
-  author: { name: string; image: any };
+  author: Author;
 }
 
 const query = groq`

@@ -1,4 +1,4 @@
-import { upstash, openai } from "@upstash/rag-chat";
+import { upstash } from "@upstash/rag-chat";
 import { redis } from "./redis";
 
 function getMaxTokens(query: string): number {
@@ -19,9 +19,22 @@ function getTemperature(query: string): number {
   return 0.5; // Lower temperature for factual responses
 }
 
-export const ragConfig = (query: string, indexedUrl: string) => ({
-  model: upstash("mistralai/Mistral-7B-Instruct-v0.2"),
+export interface RagConfigType {
+  model: ReturnType<typeof upstash>;
+  redis: typeof redis;
+  retrievalOptions: {
+    topK: number;
+    minScore: number;
+  };
+  modelOptions: {
+    max_tokens: number;
+    temperature: number;
+  };
+  systemPrompt: string;
+}
 
+export const ragConfig = (query: string, indexedUrl: string): RagConfigType => ({
+  model: upstash("mistralai/Mistral-7B-Instruct-v0.2"),
   redis: redis,
   retrievalOptions: {
     topK: 3, // Retrieve top 3 most relevant chunks

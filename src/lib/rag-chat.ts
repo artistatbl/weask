@@ -1,4 +1,8 @@
 import { RAGChat } from "@upstash/rag-chat";
-import { ragConfig } from "./rag-config";
+import { ragConfig, RagConfigType } from "./rag-config";
 
-export const ragChat = new RAGChat(ragConfig as any);
+// Example query and indexedUrl, replace with actual values or parameters as needed
+const query = "example query";
+const indexedUrl = "http://example.com";
+
+export const ragChat = new RAGChat(ragConfig(query, indexedUrl) as RagConfigType);

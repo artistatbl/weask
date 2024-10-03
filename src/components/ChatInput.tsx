@@ -22,7 +22,10 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput, is
       <div className="mx-2 flex flex-row gap-3 md:mx-4 md:last:mb-6 lg:mx-auto lg:max-w-2xl xl:max-w-3xl">
         <div className="relative flex h-full flex-1 items-stretch md:flex-col">
           <div className="relative flex flex-col w-full flex-grow p-4">
-            <form onSubmit={handleSubmit} className="relative">
+            <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+              handleSubmit(e);
+              setInput("");
+            }} className="relative">
               <Textarea
                 minRows={4}
                 autoFocus
@@ -31,7 +34,7 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput, is
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    handleSubmit(e as any);
+                    handleSubmit(e as React.FormEvent<HTMLFormElement>);
                     setInput("");
                   }
                 }}

@@ -1,19 +1,14 @@
-import Image from "next/image";
 import Navbar from "@/components/global/navbar";
 import Footer from "@/components/global/footer";
 
-import Benefits from "@/components/global/benefits";
 import HowItWorks from "@/components/global/howitworks";
 import Pricing from "@/components/global/pricing";
 import FAQ from "@/components/global/faq";
 import UrlForm from "@/components/UrlForm";
 import { SafariDemo } from "@/components/global/safari";
-import BentoCard from "@/components/global/bentoGrid";
-import { TextHoverEffectDemo } from "@/components/home/TextHoverEffect";
 import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
 import { TabsDemo } from "@/components/global/featureSection";
 import Comparison from "@/components/global/comparison";
-import Marquee from "@/components/ui/marquee";
 import { MarqueeDemo } from "@/components/global/marquee";
 
 export default function LandingPage() {

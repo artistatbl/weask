@@ -112,7 +112,7 @@ function parseGeneratedContent(output: string): GeneratedContent {
   let title = '';
   let introduction = '';
   let conclusion = '';
-  let mainContent: { heading: string; paragraphs: string[] }[] = [];
+  const mainContent: { heading: string; paragraphs: string[] }[] = []; // Changed from let to const
   let references: string[] = [];
 
   sections.forEach(section => {

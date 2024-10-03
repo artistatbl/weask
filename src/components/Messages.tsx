@@ -50,7 +50,7 @@ export const Messages: React.FC<MessagesProps> = ({ messages, isLoading }) => {
           <MessageSquare className="size-16 text-orange-600" />
           <h3 className="font-semibold text-2xl text-white">Welcome to NectLink Chat!</h3>
           <p className="text-zinc-400 text-center max-w-sm">
-            Start your conversation by asking a question about the website you're exploring.
+            Start your conversation by asking a question about the website you&apos;re exploring.
             Our AI is ready to assist you!
           </p>
         </div>

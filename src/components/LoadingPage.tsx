@@ -13,7 +13,7 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ progress }) => {
         Indexing in Progress
       </h2>
       <p className="mt-2 text-gray-300 dark:text-gray-400">
-        This may take a while. We're preparing your chat experience.
+        This may take a while. We&rsquo;re preparing your chat experience.
       </p>
       <div className="mt-4 w-64 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
         <div 
