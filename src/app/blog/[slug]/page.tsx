@@ -4,6 +4,7 @@ import { groq } from 'next-sanity';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PortableText, PortableTextComponents } from '@portabletext/react';
+import { PortableTextBlock } from '@portabletext/types'; // Import the type
 
 interface PostParams {
   params: { slug: string };
@@ -25,7 +26,7 @@ interface Post {
       _ref: string;
     };
   };
-  body: any; // Assuming body is a complex structure, keeping it as any for now
+  body: PortableTextBlock[]; // Use the specific type for Portable Text
   author: Author;
   publishedAt: string;
 }

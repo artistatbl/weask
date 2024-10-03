@@ -6,7 +6,6 @@ import { ratelimitConfig } from "@/lib/rateLimiter";
 import * as server from "@clerk/nextjs/server";
 import { redis } from "@/lib/redis";
 import { retryWithBackoff } from "@/lib/retry-backoff";
-import { estimateTokens } from "@/lib/utils";
 import { RagChatResponse } from "@/types/ragChat";
 
 export async function processChatStream(user: server.User, messages: { content: string }[], sessionId: string, userPlan: string, indexedUrl: string) {
@@ -66,9 +65,6 @@ export async function processChatStream(user: server.User, messages: { content: 
       ...aiOptions,
       context: urlContext
     });
-    if ((response as any).usage && typeof (response as any).usage.total_tokens === 'number') {
-      // await tokenTracker.recordUsage((response as any).usage.total_tokens, estimatedTokens);
-    }
     return response;
   });
 

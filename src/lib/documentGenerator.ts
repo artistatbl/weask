@@ -1,7 +1,6 @@
 import { ragChat } from "@/lib/rag-chat";
 import { ratelimitConfig } from "@/lib/rateLimiter";
 import { tokenTracker } from "@/lib/tokenTracker";
-import { estimateTokens } from "@/lib/utils";
 import { redis } from "@/lib/redis";
 
 interface GeneratedContent {
@@ -26,11 +25,7 @@ export async function generateDocument(type: string, url: string, userId: string
       }
     }
 
-    // Token usage check
-    const estimatedTokens = estimateTokens(url);
-    if (!(await tokenTracker.canMakeRequest(estimatedTokens))) {
-      throw new Error("API rate limit approached. Please try again later.");
-    }
+  
 
     const prompt = `
     Generate a structured ${type} about the main topic discussed on this webpage: ${url}
@@ -84,11 +79,7 @@ export async function generateDocument(type: string, url: string, userId: string
       console.log('Parsed output:', parsedOutput);
 
       // Record token usage
-      const lastMessage = chatResponse.history[chatResponse.history.length - 1];
-      if (lastMessage && lastMessage.usage_metadata && typeof lastMessage.usage_metadata.total_tokens === 'number') {
-        await tokenTracker.recordUsage(lastMessage.usage_metadata.total_tokens, estimatedTokens);
-        console.log(`Token usage recorded for user ${userId}: ${estimatedTokens} tokens used out of ${lastMessage.usage_metadata.total_tokens} available`);
-      }
+     
 
       // Cache the result
       await redis.set(cacheKey, JSON.stringify(parsedOutput), { ex: 3600 });
