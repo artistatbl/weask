@@ -32,9 +32,9 @@ const Navbar = () => {
 
   const isActive = (href: string) => {
     if (href === '/') {
-      return currentPath === href;
+      return currentPath ? currentPath === href : false;
     }
-    return currentPath.startsWith(href);
+    return currentPath ? currentPath.startsWith(href) : false;
   };
 
   return (

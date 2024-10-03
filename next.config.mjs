@@ -1,12 +1,18 @@
 import withPWA from 'next-pwa';
 
-const nextConfig = withPWA({
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    domains: ['img.clerk.com',
+       'cdn.sanity.io',
+      'images.unsplash.com',
+      'assets.aceternity.com'
+      ],
+  },
+};
+
+export default withPWA({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
-})({
-  // Your other Next.js config options here
-});
-
-export default nextConfig;
+})(nextConfig);

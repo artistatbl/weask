@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
-import { ratelimitConfig } from "@/lib/rateLimiter";
+// import { auth } from "@clerk/nextjs";
+import { auth } from '@clerk/nextjs/server'
 
 
+// Add this line to make the route dynamic
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await currentUser();
-    if (!user) {
+    const { userId } = auth();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-
-   
     const recentUrls = await prisma.searchHistory.findMany({
-      where: { userId: user.id },
+      where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 5,
       select: {

@@ -9,9 +9,7 @@
     {
       "files": ["*.ts", "*.tsx"],
       "rules": {
-        "no-var": ["error", {
-          "varIgnorePatterns": ["^prisma$"]
-        }]
+        "no-var": "error"
       }
     }
   ]
