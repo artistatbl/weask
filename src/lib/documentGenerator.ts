@@ -1,6 +1,5 @@
 import { ragChat } from "@/lib/rag-chat";
 import { ratelimitConfig } from "@/lib/rateLimiter";
-import { tokenTracker } from "@/lib/tokenTracker";
 import { redis } from "@/lib/redis";
 
 interface GeneratedContent {
