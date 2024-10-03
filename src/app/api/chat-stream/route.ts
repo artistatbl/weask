@@ -8,7 +8,7 @@ import { ratelimitConfig } from "@/lib/rateLimiter";
 
 const MAX_RETRIES = 3;
 
-async function checkRateLimit(userId: string, retries = 0): Promise<{ success: boolean, limit?: number, reset?: number, remaining?: number }> {
+async function checkRateLimit(userId: string, retries = 0): Promise<{ success: boolean, limit?: number, reset?: number }> {
   if (!ratelimitConfig.enabled || !ratelimitConfig.ratelimit) {
     return { success: true };
   }
@@ -33,7 +33,7 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Apply rate limiting with retry
-    const { success, limit, reset, remaining } = await checkRateLimit(user.id);
+    const { success, limit, reset } = await checkRateLimit(user.id);
     if (!success) {
       return NextResponse.json(
         {
@@ -77,14 +77,14 @@ export const POST = async (req: NextRequest) => {
     const response = await processChatStream(user, messages, sessionId, userPlan, extractedUrl);
     console.log("Process chat stream response:", response);
     return aiUseChatAdapter(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Chat stream error:", error);
-    if (error.status === 404) {
+    if (error instanceof Error && 'status' in error && error.status === 404) {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
     console.error("Detailed error:", JSON.stringify(error, null, 2));
     return NextResponse.json(
-      { error: "An unexpected error occurred.", details: error.message },
+      { error: "An unexpected error occurred.", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

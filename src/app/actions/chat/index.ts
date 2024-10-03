@@ -4,7 +4,8 @@ import {prisma} from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { Message } from '../../../utils/types';
 
-
+// Add this custom error type at the top of the file
+type ChatError = Error & { status?: number };
 
 export const fetchChatMessages = async (sessionId: string, userPlan: string) => {
   const user = await currentUser();
@@ -45,9 +46,10 @@ export const fetchChatMessages = async (sessionId: string, userPlan: string) => 
 
     return { status: 200, messages: typedMessages }; // Return messages
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching messages:", error);
-    return { status: 400, message: error.message, messages: [] }; // Handle error
+    const chatError = error as ChatError;
+    return { status: 400, message: chatError.message, messages: [] };
   }
 };
 
@@ -79,14 +81,12 @@ export const saveChatMessage = async (sessionId: string, message: Message) => {
     });
 
     return { status: 200 };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error saving message:", error);
-    return { status: 400, message: error.message };
+    const chatError = error as ChatError;
+    return { status: 400, message: chatError.message };
   }
 };
-
-
-
 
 export const saveSearchHistory = async (url: string, sessionId: string) => {
   const user = await currentUser();
@@ -120,8 +120,9 @@ export const saveSearchHistory = async (url: string, sessionId: string) => {
     });
 
     return { status: 200 };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error saving search history:", error);
-    return { status: 400, message: error.message };
+    const chatError = error as ChatError;
+    return { status: 400, message: chatError.message };
   }
 };

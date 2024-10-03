@@ -26,8 +26,12 @@ export const onLoginUser = async () => {
         // Handle case where user is not found in the database
         return { status: 404, message: "User not found" };
       }
-    } catch (error: any) { // Added type annotation for error
-      return { status: 400, message: error.message };
+    } catch (error: unknown) { // Changed from any to unknown
+      if (error instanceof Error) {
+        return { status: 400, message: error.message };
+      }
+      // Handle non-Error objects
+      return { status: 400, message: 'An unknown error occurred' };
     }
   }
 };

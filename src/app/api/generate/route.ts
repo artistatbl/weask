@@ -33,10 +33,11 @@ export const POST = async (req: NextRequest) => {
     console.log('Generated document:', document);
     return NextResponse.json({ document });
 
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error("Document generation error:", error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
-      { error: "An unexpected error occurred.", details: error.message },
+      { error: "An unexpected error occurred.", details: errorMessage },
       { status: 500 }
     );
   }
