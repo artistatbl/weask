@@ -3,13 +3,24 @@ import withPWA from 'next-pwa';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['img.clerk.com',
-       'cdn.sanity.io',
+    domains: [
+      'img.clerk.com',
+      'cdn.sanity.io',
       'images.unsplash.com',
       'assets.aceternity.com',
       'https://avatar.vercel.sh/jack',
       'avatar.vercel.sh'
-      ],
+    ],
+  },
+  webpack: (config, { isServer }) => {
+    // Add WebAssembly support
+    config.experiments = { ...config.experiments, asyncWebAssembly: true };
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'webassembly/async',
+    });
+
+    return config;
   },
 };
 
