@@ -9,9 +9,6 @@ export async function POST(req: Request) {
   
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
-  //console.log("WEBHOOK_SECRET:", WEBHOOK_SECRET); 
-  // Add this line for debugging
-
   if (!WEBHOOK_SECRET) {
     console.error("CLERK_WEBHOOK_SECRET is not set in the environment variables");
     return new Response("Server misconfigured", { status: 500 });

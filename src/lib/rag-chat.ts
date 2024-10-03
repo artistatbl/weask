@@ -5,7 +5,4 @@ import { ragConfig, RagConfigType } from "./rag-config";
 const query = "example query";
 const indexedUrl = "http://example.com";
 
-
-
-
 export const ragChat = new RAGChat(ragConfig(query, indexedUrl) as RagConfigType);
