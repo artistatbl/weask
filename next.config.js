@@ -1,16 +1,17 @@
-const nextConfig = {
-    webpack: (config, { isServer }) => {
-      // Add a rule to handle .wasm files
-      config.module.rules.push({
-        test: /\.wasm$/,
-        type: "webassembly/async",
-      });
-
-      // Ensure WebAssembly is enabled
-      config.experiments = { asyncWebAssembly: true };
-
+module.exports = {
+    productionBrowserSourceMaps: true,
+    webpack: (config) => {
+      config.experiments = {
+        asyncWebAssembly: true,
+        layers: true,
+      };
       return config;
     },
+    experimental: {
+      outputFileTracingIncludes: {
+        "/api/**/*": ["./node_modules/**/*.wasm", "./node_modules/tiktoken/**/*.wasm"],
+        "/*": ["./cache/**/*"],
+      },
+      serverComponentsExternalPackages: ["sharp", "onnxruntime-node", "tiktoken"],
+    },
   };
-
-module.exports = nextConfig;
