@@ -17,7 +17,7 @@ const config = {
   prefix: "",
   theme: {
   	container: {
-  		center: true,
+  		center: 'true',
   		padding: '2rem',
   		screens: {
   			'2xl': '1400px'
@@ -25,11 +25,9 @@ const config = {
   	},
   	extend: {
   		colors: {
-
-			bg: '#E0E7F1',
-			main: '#A3E636',
-			mainAccent: '#4d80e6', // not needed for shadcn
-	
+  			bg: '#E0E7F1',
+  			main: '#A3E636',
+  			mainAccent: '#4d80e6',
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
@@ -75,23 +73,21 @@ const config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)',
-			base: '5px'
-  		
-	},
-	boxShadow: {
-	  base: '4px 4px 0px 0px rgba(0,0,0,1)',
-	},
-	fontWeight: {
-        base: '500',
-        heading: '700',
-      },
+  			base: '5px'
+  		},
+  		boxShadow: {
+  			base: '4px 4px 0px 0px rgba(0,0,0,1)'
+  		},
+  		fontWeight: {
+  			base: '500',
+  			heading: '700'
+  		},
   		keyframes: {
-			'border-beam': {
-				'100%': {
-				"offset-distance": '100%',
-			}
-		},
-	
+  			'border-beam': {
+  				'100%': {
+  					'offset-distance': '100%'
+  				}
+  			},
   			'accordion-down': {
   				from: {
   					height: '0'
@@ -107,13 +103,39 @@ const config = {
   				to: {
   					height: '0'
   				}
+  			},
+  			'background-position-spin': {
+  				'0%': {
+  					backgroundPosition: 'top center'
+  				},
+  				'100%': {
+  					backgroundPosition: 'bottom center'
+  				}
+  			},
+  			marquee: {
+  				from: {
+  					transform: 'translateX(0)'
+  				},
+  				to: {
+  					transform: 'translateX(calc(-100% - var(--gap)))'
+  				}
+  			},
+  			'marquee-vertical': {
+  				from: {
+  					transform: 'translateY(0)'
+  				},
+  				to: {
+  					transform: 'translateY(calc(-100% - var(--gap)))'
+  				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-			"border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
-
+  			'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
+  			'background-position-spin': 'background-position-spin 3000ms infinite alternate',
+  			marquee: 'marquee var(--duration) infinite linear',
+  			'marquee-vertical': 'marquee-vertical var(--duration) linear infinite'
   		}
   	}
   },

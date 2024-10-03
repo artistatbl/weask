@@ -1,37 +1,71 @@
-import React from 'react';
-import { CheckCircle } from 'lucide-react';
+"use client"
+import React, { useState } from 'react';
+import { Check } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
-const Pricing = () => {
+const PricingComponent = () => {
+  const [isYearly, setIsYearly] = useState(false);
+
+  const plan = {
+    name: 'Pro Plan',
+    monthlyPrice: 7.99,
+    yearlyPrice: 39.99,
+    features: [
+      'Unlimited Users',
+      'Unlimited Storage',
+      'Priority Support',
+      'Advanced Analytics',
+      'Custom Integrations',
+      'API Access'
+    ],
+  };
+
+  const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+  const billing = isYearly ? 'year' : 'month';
+
   return (
-    <section className="py-16 px-4">
-      <div className="container mx-auto text-center">
-        <h2 className="text-3xl font-bold mb-12 text-pink-600 dark:text-pink-300">Simple Pricing</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            { plan: 'Basic', price: '$9', features: ['100 chats/month', 'Basic support', 'Standard AI model'] },
-            { plan: 'Pro', price: '$29', features: ['Unlimited chats', 'Priority support', 'Advanced AI model', 'Custom branding'] },
-            { plan: 'Enterprise', price: 'Custom', features: ['Unlimited everything', '24/7 support', 'Dedicated account manager', 'On-premise option'] }
-          ].map((tier, index) => (
-            <div key={index} className={`bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg ${index === 1 ? 'transform scale-105 border-4 border-pink-500' : ''}`}>
-              <h3 className="text-2xl font-bold mb-4">{tier.plan}</h3>
-              <div className="text-4xl font-bold mb-6">{tier.price}<span className="text-base font-normal">/mo</span></div>
-              <ul className="text-left mb-8">
-                {tier.features.map((feature, i) => (
-                  <li key={i} className="flex items-center mb-2">
-                    <CheckCircle className="text-green-500 mr-2" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <button className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300">
-                Choose Plan
-              </button>
-            </div>
-          ))}
+    <div className="flex flex-col items-center  p-8  text-gray-800">
+      <h1 className="text-4xl font-bold mb-8">Choose Your Plan</h1>
+      
+      <div className="flex items-center space-x-4 mb-8">
+        <span className={`font-semibold ${!isYearly ? 'text-orange-600' : 'text-gray-600'}`}>Monthly</span>
+        <Switch
+          checked={isYearly}
+          onCheckedChange={setIsYearly}
+          className="bg-blue-300"
+        />
+        <span className={`font-semibold ${isYearly ? 'text-orange-600' : 'text-gray-600'}`}>Yearly</span>
+      </div>
+      
+      <div className="w-full max-w-md">
+        <div className="bg-white border  border-orange-600 rounded-2xl shadow-xl overflow-hidden">
+          <div className="px-8 pt-8 pb-6 bg-orange-600 text-white">
+            <h2 className="text-3xl font-bold mb-2">{plan.name}</h2>
+            <p className="text-5xl font-bold">
+              ${price.toFixed(2)}
+              <span className="text-lg font-normal">/{billing}</span>
+            </p>
+            {isYearly && (
+              <p className="mt-2 text-orange-200">Save ${((plan.monthlyPrice * 12) - plan.yearlyPrice).toFixed(2)} annually</p>
+            )}
+          </div>
+          <div className="px-8 py-8">
+            <ul className="mb-8 ">
+              {plan.features.map((feature, i) => (
+                <li key={i} className="flex items-center mb-4">
+                  <Check className="mr-3 text-orange-500" size={20} />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <button className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              Get Started
+            </button>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
-export default Pricing;
+export default PricingComponent;

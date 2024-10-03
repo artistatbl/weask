@@ -32,7 +32,7 @@ export default async function BlogPage() {
   const { posts } = await client.fetch<{ posts: Post[] }>(query);
 
   return (
-    <div className="min-h-screen  dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-center text-orange-600 dark:text-white">
           Insights & Innovation
@@ -43,17 +43,15 @@ export default async function BlogPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ">
           {posts.map((post: Post) => (
             <div key={post._id} className="bg-white border border-zinc-300 dark:bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-xl transition-all duration-300 flex flex-col">
-              <div className="relative">
+              <div className="relative h-48 w-full">
                 {post.mainImage && (
-                  <div className="h-48 w-full overflow-hidden ">
-                    <Image
-                      src={urlFor(post.mainImage).width(750).height(440).url()}
-                      alt={post.title}
-                      layout="fill"
-
-                      className="transition-transform duration-300 hover:scale-105"
-                    />
-                  </div>
+                  <Image
+                    src={urlFor(post.mainImage).width(750).height(440).url()}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-300 hover:scale-105"
+                  />
                 )}
                 <div className="absolute top-2 right-2 flex items-center bg-white dark:bg-gray-800 rounded-full p-1 shadow-md">
                   {post.author.image && (

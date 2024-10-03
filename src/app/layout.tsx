@@ -1,26 +1,39 @@
-import type { Metadata } from "next";
-import { DM_Sans } from 'next/font/google'
+import type { Metadata, Viewport } from "next";
+import { Inter } from 'next/font/google'
 
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/Providers";
 import { ClerkProvider } from "@clerk/nextjs";
-import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster"
 import { CommandK } from "@/components/CommandK";
 import dynamic from 'next/dynamic';
-import DiagnosticComponent from "@/hooks/DiagnosticComponent";
 
 const OnboardingTour = dynamic(() => import('@/components/OnboardingTour').then(mod => mod.OnboardingTour), {
   ssr: false,
 });
 
-const dmSans = DM_Sans({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "NectLink",
-  description: "Easily Chat with website with NectLink AI",
+  title: 'WeAsk',
+  description: 'WeAsk is an AI-powered question-answering platform.',
+  themeColor: '#8936FF',
+  manifest: '/manifest.json',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black',
+    title: 'WeAsk',
+  },
+  icons: {
+    apple: '/icon512_maskable.png',
+  },
 };
+
+// export const viewport: Viewport = {
+//   themeColor: "#000000",
+// };
 
 export default function RootLayout({
   children,
@@ -32,12 +45,15 @@ export default function RootLayout({
     publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     >
     <html lang="en">
-      <body className={cn(dmSans.className, "min-h-screen antialiased font-serif")}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+      </head>
+      <body className={cn(inter.className, "min-h-screen antialiased")}>
         <Providers>
           <main className="h-screen text-foreground bg-zinc-800 command-k-hint">
             {children}
             <CommandK />
-            {/* <DiagnosticComponent/> */}
             <OnboardingTour />
           </main>
           <Toaster />
