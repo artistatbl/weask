@@ -2,6 +2,8 @@ import withPWA from 'next-pwa';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
   images: {
     domains: [
       'img.clerk.com',
@@ -12,17 +14,19 @@ const nextConfig = {
       'avatar.vercel.sh'
     ],
   },
-  webpack: (config, { isServer }) => {
-    // Add WebAssembly support
-    config.experiments = { ...config.experiments, asyncWebAssembly: true };
-    config.module.rules.push({
-      test: /\.wasm$/,
-      type: 'webassembly/async',
-    });
+//   webpack: (config, { isServer }) => {
+//     // Add WebAssembly support
+//     config.experiments = { ...config.experiments, asyncWebAssembly: true };
+//     config.module.rules.push({
+//       test: /\.wasm$/,
+//       type: 'webassembly/async',
+//     });
 
-    return config;
-  },
+//     return config;
+//   },
+// };
 };
+
 
 export default withPWA({
   dest: 'public',
