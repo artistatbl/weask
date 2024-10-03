@@ -10,23 +10,28 @@ const nextConfig = {
       'cdn.sanity.io',
       'images.unsplash.com',
       'assets.aceternity.com',
-      'https://avatar.vercel.sh/jack',
-      'avatar.vercel.sh'
+      'avatar.vercel.sh' // Corrected the domain here
     ],
   },
-//   webpack: (config, { isServer }) => {
-//     // Add WebAssembly support
-//     config.experiments = { ...config.experiments, asyncWebAssembly: true };
-//     config.module.rules.push({
-//       test: /\.wasm$/,
-//       type: 'webassembly/async',
-//     });
+  productionBrowserSourceMaps: true,
+  webpack: (config, { isServer }) => {
+    // Add WebAssembly support
+    config.experiments = { asyncWebAssembly: true, layers: true };
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'webassembly/async',
+    });
 
-//     return config;
-//   },
-// };
+    return config;
+  },
+  experimental: {
+    outputFileTracingIncludes: {
+      "/api/**/*": ["./node_modules/**/*.wasm", "./node_modules/tiktoken/**/*.wasm"],
+      "/*": ["./cache/**/*"],
+    },
+    serverComponentsExternalPackages: ["sharp", "onnxruntime-node", "tiktoken"],
+  },
 };
-
 
 export default withPWA({
   dest: 'public',
