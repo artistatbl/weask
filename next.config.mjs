@@ -45,7 +45,7 @@ export default withSentryConfig(pwaConfig, {
   // https://github.com/getsentry/sentry-webpack-plugin#options
   
   org: "nexusflow",
-  project: "nexus",
+  project: "javascript-nextjs", // Set the correct project name
   
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
