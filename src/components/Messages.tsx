@@ -15,9 +15,7 @@ export const Messages: React.FC<MessagesProps> = ({ messages, isLoading }) => {
 
   useEffect(() => {
     if (isLoading) {
-      // Set to 'thinking' immediately when loading starts
       setAiState('thinking');
-      // After a short delay, change to 'responding'
       const timer = setTimeout(() => setAiState('responding'), 1500);
       return () => clearTimeout(timer);
     } else {
@@ -37,7 +35,7 @@ export const Messages: React.FC<MessagesProps> = ({ messages, isLoading }) => {
               aiState={i === messages.length - 1 && message.role !== "user" ? aiState : null}
             />
           ))}
-          {isLoading && messages[messages.length - 1]?.role === "user" && (
+          {isLoading && messages[messages.length - 1]?.role === "user" && messages[messages.length - 1]?.content && (
             <Message 
               content="" 
               isUserMessage={false} 

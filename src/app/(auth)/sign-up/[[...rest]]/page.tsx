@@ -16,7 +16,7 @@ export default function Page() {
   }
 
   return (
-    <div className="mt-14 mb-36 flex items-center justify-center">
+    <div className=" flex items-center justify-center">
       <SignUp 
         appearance={{
           elements: {

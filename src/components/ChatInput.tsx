@@ -23,8 +23,11 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput, is
         <div className="relative flex h-full flex-1 items-stretch md:flex-col">
           <div className="relative flex flex-col w-full flex-grow p-4">
             <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-              handleSubmit(e);
-              setInput("");
+              if (input.trim()) { // Check if input is not empty
+                handleSubmit(e);
+                setInput("");
+              }
+              e.preventDefault(); // Prevent form submission if input is empty
             }} className="relative">
               <Textarea
                 minRows={4}
@@ -34,8 +37,10 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput, is
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    handleSubmit(e as React.FormEvent<HTMLFormElement>);
-                    setInput("");
+                    if (input.trim()) { // Check if input is not empty
+                      handleSubmit(e as React.FormEvent<HTMLFormElement>);
+                      setInput("");
+                    }
                   }
                 }}
                 placeholder="Enter your question..."
@@ -47,7 +52,7 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput, is
                 size="sm"
                 type="submit"
                 className="absolute z-10 border-2 border-black bg-gray-200 right-2 bottom-2"
-                disabled={isLoading}
+                disabled={isLoading || !input.trim()} // Disable button if input is empty
               >
                 {isLoading ? <Loader className="size-4 animate-spin" /> : <Send className="size-4" />}
               </Button>

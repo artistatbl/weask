@@ -24,8 +24,6 @@ export async function generateDocument(type: string, url: string, userId: string
       }
     }
 
-  
-
     const prompt = `
     Generate a structured ${type} about the main topic discussed on this webpage: ${url}
     Format the ${type} as follows, without using any asterisks or other markdown symbols:
@@ -35,7 +33,7 @@ export async function generateDocument(type: string, url: string, userId: string
     Introduction: A brief introduction to the specific topic discussed on this webpage
 
     Main Content:
-    Include at least three main sections, each with a heading and 1-2 paragraphs. Format each section like this:
+    Include at least three main sections, each with a heading and 1-3 paragraphs. Format each section like this:
     
     Heading 1: 
     [Paragraph about the first main point]
@@ -60,6 +58,7 @@ export async function generateDocument(type: string, url: string, userId: string
     Important:
     1. Use information only from the provided URL and its subpages.
     2. Do not include any external sources or made-up information.
+    3. Do not include the  heading:1 to 3 within the response, just just say the header name, dont have like the heading 1 on the output.
     3. If you can't find enough information on a particular point, simply state that the information is not available on the website.
     4. Make sure to include the References section in your output.
   `;
@@ -74,16 +73,20 @@ export async function generateDocument(type: string, url: string, userId: string
     
     if ('output' in chatResponse && typeof chatResponse.output === 'string') {
       console.log('Raw AI output:', chatResponse.output);
-      const parsedOutput = parseGeneratedContent(chatResponse.output);
-      console.log('Parsed output:', parsedOutput);
 
-      // Record token usage
-     
+      // Check if the output is valid JSON
+      try {
+        const parsedOutput = parseGeneratedContent(chatResponse.output);
+        console.log('Parsed output:', parsedOutput);
 
-      // Cache the result
-      await redis.set(cacheKey, JSON.stringify(parsedOutput), { ex: 3600 });
+        // Cache the result
+        await redis.set(cacheKey, JSON.stringify(parsedOutput), { ex: 3600 });
 
-      return parsedOutput;
+        return parsedOutput;
+      } catch (jsonError) {
+        console.error("Error parsing AI output:", jsonError);
+        throw new Error('Invalid JSON format in AI output');
+      }
     } else {
       console.error("Unexpected response structure:", chatResponse);
       throw new Error('Unexpected response structure from AI');
@@ -102,7 +105,7 @@ function parseGeneratedContent(output: string): GeneratedContent {
   let title = '';
   let introduction = '';
   let conclusion = '';
-  const mainContent: { heading: string; paragraphs: string[] }[] = []; // Changed from let to const
+  const mainContent: { heading: string; paragraphs: string[] }[] = [];
   let references: string[] = [];
 
   sections.forEach(section => {
@@ -116,8 +119,10 @@ function parseGeneratedContent(output: string): GeneratedContent {
     } else if (heading.toLowerCase().includes('conclusion')) {
       conclusion = sectionContent;
     } else if (heading.toLowerCase().includes('heading')) {
+      // Remove "Heading X:" prefix
+      const cleanHeading = heading.replace(/^Heading \d+:\s*/, '').trim();
       mainContent.push({
-        heading: heading.trim(),
+        heading: cleanHeading,
         paragraphs: sectionContent.split('\n\n').map(p => p.trim())
       });
     } else if (heading.toLowerCase().includes('references')) {

@@ -54,7 +54,7 @@ export default async function BlogPage() {
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ">
           {posts.map((post: Post) => (
-            <div key={post._id} className="bg-white border border-zinc-300 dark:bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-xl transition-all duration-300 flex flex-col">
+            <div key={post._id} className="bg-white border border-zinc-400 dark:bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-xl transition-all duration-300 flex flex-col">
               <div className="relative h-48 w-full">
                 {post.mainImage && (
                   <Image
@@ -65,7 +65,7 @@ export default async function BlogPage() {
                     className="object-cover transition-transform duration-300 hover:scale-105"
                   />
                 )}
-                <div className="absolute top-2 right-2 flex items-center bg-white dark:bg-gray-800 rounded-full p-1 shadow-md">
+                <div className="absolute top-2 right-2 flex items-center bg-orange-500 dark:bg-gray-800 rounded-full p-1 shadow-md">
                   {post.author.image && (
                     <Image
                       src={urlFor(post.author.image).width(32).height(32).url()}
@@ -92,7 +92,7 @@ export default async function BlogPage() {
                   {post.title}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 flex-grow">{post.excerpt}</p>
-                <Link href={`/blog/${post.slug.current}`} className="text-black bg-gray-100 p-2 border border-orange-600 rounded-lg text-center hover:text-orange-600 font-semibold text-sm">
+                <Link href={`/blog/${post.slug.current}`} className="text-black bg-gray-100 p-2 border-2 border-orange-600 rounded-lg text-center hover:text-orange-600 font-semibold text-sm">
                   Read more 
                 </Link>
               </div>

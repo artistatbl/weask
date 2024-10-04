@@ -13,7 +13,7 @@ export default function UrlForm() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (url) {
       setIsLoading(true);
@@ -28,29 +28,35 @@ export default function UrlForm() {
 
         const data = await response.json();
 
-        if (data.isEmbeddable) {
-          toast({
-            title: "Success",
-            description: "Website preview is available. Starting chat...",
-            variant: "success",
-          });
-          await router.push(`/chat/${encodeURIComponent(url)}`);
-        } else {
-          toast({
-            title: "Website Preview Unavailable",
-            description: "This website cannot be embedded for preview.",
-            variant: "destructive",
-          });
-        }
+        setTimeout(() => {
+          if (data.isEmbeddable) {
+            toast({
+              title: "Success",
+              description: "Website preview is available. Starting chat...",
+              variant: "success",
+            });
+            router.push(`/chat/${encodeURIComponent(url)}`);
+          } else {
+            toast({
+              title: "Website Preview Unavailable",
+              description: "This website cannot be embedded for preview.",
+              variant: "destructive",
+            });
+          }
+        }, 4000); // 3-second delay for the toast
       } catch (error) {
         console.error("Error checking embeddability:", error);
-        toast({
-          title: "Error",
-          description: "Failed to check website preview availability.",
-          variant: "destructive",
-        });
+        setTimeout(() => {
+          toast({
+            title: "Error",
+            description: "Failed to check website preview availability.",
+            variant: "destructive",
+          });
+        }, 4000); // 3-second delay for the error toast
       } finally {
-        setIsLoading(false);
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 5000); // 3-second delay for the loader
       }
     }
   };

@@ -8,6 +8,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/toaster"
 import { CommandK } from "@/components/CommandK";
 import dynamic from 'next/dynamic';
+import CookieConsentPopup from "@/components/home/cookie";
 
 const OnboardingTour = dynamic(() => import('@/components/OnboardingTour').then(mod => mod.OnboardingTour), {
   ssr: false,
@@ -53,6 +54,7 @@ export default function RootLayout({
             {children}
             <CommandK />
             <OnboardingTour />
+            <CookieConsentPopup/>
           </main>
           <Toaster />
         </Providers>
