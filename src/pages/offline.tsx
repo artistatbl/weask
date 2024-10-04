@@ -10,7 +10,7 @@ const Offline = () => (
       <h1 className="text-4xl font-bold mb-4">You&#39;re offline</h1>
       <p className="text-xl mb-8">Please check your internet connection and try again.</p>
       <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        className="bg-gray-800 hover:bg-gray-950 text-white font-bold py-2 px-4 rounded"
         onClick={() => window.location.reload()}
       >
         Retry

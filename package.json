@@ -25,6 +25,7 @@
     "@sanity/icons": "^3.4.0",
     "@sanity/image-url": "^1.0.2",
     "@sanity/vision": "^3.57.4",
+    "@sentry/nextjs": "^8",
     "@supabase/supabase-js": "^2.45.4",
     "@tabler/icons-react": "^3.19.0",
     "@upstash/rag-chat": "^1.6.4",
