@@ -59,7 +59,7 @@ const HowItWorks = () => {
           <div className="space-y-4">
             <div className="flex items-start">
               <div className="bg-orange-100 rounded-lg p-3 max-w-xs">
-                <p className="text-xs sm:text-sm text-black">What's the main focus of this website?</p>
+                <p className="text-xs sm:text-sm text-black">What&apos;s the main focus of this website?</p>
               </div>
             </div>
             <div className="flex items-start justify-end">
