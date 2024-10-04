@@ -7,12 +7,14 @@ export const POST = async (req: NextRequest) => {
   try {
     const user = await currentUser();
     if (!user) {
+      console.error("Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { type, url } = await req.json();
 
     if (!url) {
+      console.error("URL is required but not provided");
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
@@ -21,6 +23,7 @@ export const POST = async (req: NextRequest) => {
     });
 
     if (!dbUser) {
+      console.error("User not found in database");
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
@@ -28,6 +31,7 @@ export const POST = async (req: NextRequest) => {
 
     const document = await generateDocument(type, url, user.id);
     if ('error' in document) {
+      console.error("Error in document generation:", document.output);
       return NextResponse.json({ error: document.output }, { status: 400 });
     }
     console.log('Generated document:', document);

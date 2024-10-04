@@ -7,7 +7,7 @@ interface GeneratedContent {
   introduction: string;
   mainContent: { heading: string; paragraphs: string[] }[];
   conclusion: string;
-  references: string[]; // New field for references
+  references: string[];
 }
 
 export async function generateDocument(type: string, url: string, userId: string) {

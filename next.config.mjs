@@ -77,3 +77,19 @@ export default withSentryConfig(pwaConfig, {
   // Disable telemetry
   telemetry: false,
 });
+
+module.exports = {
+  async headers() {
+    return [
+      {
+        source: '/_next/static/media/a34f9d1faa5f3315-s.p.woff2',
+        headers: [
+          {
+            key: 'Link',
+            value: '</_next/static/media/a34f9d1faa5f3315-s.p.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin="anonymous"',
+          },
+        ],
+      },
+    ];
+  },
+};
