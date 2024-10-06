@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo} from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { FileText, File, Copy, Search } from 'lucide-react'
@@ -15,10 +15,13 @@ import CommandUrlForm from '@/components/CommandUrlForm'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import LoadingSpinner from '@/components/home/LoadingGenerate'
 import  {saveSearchHistory}  from '@/app/actions/chat'
 import { getSearchHistory } from '@/lib/getSearchHistory'
+import { JobResult, GeneratedContent } from '@/utils/types';
+
+
 import { useAuth } from '@clerk/nextjs'; // Add this import
+import LoadingPage from './home/LoadingGenerate'
 
 
 
@@ -29,25 +32,26 @@ interface SearchHistoryItem {
   visitedAt: string;
 }
 
+// interface ErrorResponse {
+//   error?: string;
+// }
 
-interface GeneratedContent {
-  title?: string;
-  introduction?: string;
-  mainContent?: { heading: string; paragraphs: string[] }[];
-  conclusion?: string;
-  references?: string[];
-}
-
-export function CommandK() {
+ export const  CommandK: React.FC = () => {
   const [open, setOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null)
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const { isSignedIn, isLoaded } = useAuth(); // Add this line
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+
+
+
+
 
 
   const router = useRouter()
@@ -171,49 +175,66 @@ export function CommandK() {
       }
     }
   }
-  const handleGenerate = async (type: string) => {
-    setIsLoading(true)
-    setOpen(false) // Close the command dialog
-    toast({
-      title: 'Generating',
-      description: `Generating a ${type}. Please wait...`,
-      variant: 'success',
-    })
-    try {
-      if (!currentUrl) {
-        throw new Error('No URL available to generate content');
-      }
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ type, url: currentUrl }),
-      })
-      const data = await response.json()
-      if (response.ok) {
-        setGeneratedContent(data.document);
-        setIsExpanded(true);
-        setTimeout(() => setDialogOpen(true), 300); // Delay to allow expansion animation
-      } else {
-        throw new Error(data.error || 'An error occurred while generating the document')
-      }
-    } catch (error: unknown) {
-      console.error('Generation error:', error)
-      let errorMessage = `There was an error generating the ${type}. Please try again.`
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // Generate function for eassay and  report
+// ... (other imports)
 
+const handleGenerate = async (type: string) => {
+  setIsGenerating(true);
+  setOpen(false);
+
+  try {
+    if (!currentUrl) {
+      throw new Error('No URL available to generate content');
+    }
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type, url: currentUrl }),
+    });
+    const data: { jobId: string } = await response.json();
+    if (!response.ok) {
+     // throw new Error(data || 'An error occurred while generating the document');
+    }
+
+    setCurrentJobId(data.jobId);
+
+  } catch (error) {
+    console.error('Generation error:', error);
+    let errorMessage = `There was an error generating the ${type}. Please try again.`
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    toast({
+      title: 'Error',
+      description: errorMessage,
+      variant: 'destructive',
+    });
+    setIsGenerating(false);
+  }
+};
+
+const handleGenerationComplete = (result: JobResult) => {
+  if (result.status === 'completed' && result.result) {
+    setGeneratedContent(result.result);
+    setIsExpanded(true);
+    setTimeout(() => setDialogOpen(true), 300);
+  } else if (result.status === 'failed') {
+    toast({
+      title: 'Generation Failed',
+      description: result.error || 'An unknown error occurred',
+      variant: 'destructive',
+    });
+  }
+  setIsGenerating(false);
+  setCurrentJobId(null);
+};
+
+
+
+
+   
   const copyToClipboard = () => {
     if (!generatedContent) {
       toast({
@@ -351,7 +372,7 @@ export function CommandK() {
               </CommandGroup>
             </CommandList>
           </CommandDialog>
-          <Dialog open={isLoading || dialogOpen} onOpenChange={(open) => {
+          <Dialog open={isGenerating || dialogOpen} onOpenChange={(open) => {
             if (!open) {
               setDialogOpen(false);
               setIsExpanded(false);
@@ -365,12 +386,13 @@ export function CommandK() {
               } 
               p-0 bg-white dark:bg-zinc-900 overflow-hidden
             `}>
-              {isLoading ? (
-                          <div className="p-4 h-[300px]">
-                          <LoadingSpinner message={`Generating ${generatedContent ? generatedContent.title : 'content'}...`} />
-                        </div>
-              
-              ) : (
+              {isGenerating && currentJobId && (
+                <LoadingPage 
+                  jobId={currentJobId} 
+                  onComplete={handleGenerationComplete} 
+                />
+              )}
+              {!isGenerating && (
                 <div className="h-full flex flex-col">
                   <div className="flex justify-between items-center p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
@@ -451,4 +473,5 @@ export function CommandK() {
       />
     </>
   )
-}
+
+ }

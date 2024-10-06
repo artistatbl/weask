@@ -20,6 +20,8 @@ model User {
   subscription     String?
   chatMessages     ChatMessage[]
   searchHistories  SearchHistory[]
+  jobs      Job[]
+
 
   @@index([clerkId])
 }
@@ -108,3 +110,20 @@ model Invoice {
   @@index([clerkId, invoiceId])
 }
 
+model Job {
+  id        String   @id @default(uuid())
+  status    String
+  result    Json?
+  error     String?
+  type      String   // e.g., 'essay', 'report'
+  url       String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+
+  @@index([userId, url])
+  @@index([status])
+}

@@ -1,6 +1,7 @@
 import { ragChat } from "@/lib/rag-chat";
 import { ratelimitConfig } from "@/lib/rateLimiter";
 import { redis } from "@/lib/redis";
+import { prisma } from "@/lib/db";
 
 interface GeneratedContent {
   title: string;
@@ -10,7 +11,7 @@ interface GeneratedContent {
   references: string[];
 }
 
-export async function generateDocument(type: string, url: string, userId: string) {
+export async function generateDocument(type: string, url: string, userId: string): Promise<GeneratedContent | { error: string }> {
   try {
     console.log('Generating document for URL:', url);
 
@@ -58,9 +59,9 @@ export async function generateDocument(type: string, url: string, userId: string
     Important:
     1. Use information only from the provided URL and its subpages.
     2. Do not include any external sources or made-up information.
-    3. Do not include the  heading:1 to 3 within the response, just just say the header name, dont have like the heading 1 on the output.
-    3. If you can't find enough information on a particular point, simply state that the information is not available on the website.
-    4. Make sure to include the References section in your output.
+    3. Do not include the heading:1 to 3 within the response, just say the header name, don't have the heading 1 on the output.
+    4. If you can't find enough information on a particular point, simply state that the information is not available on the website.
+    5. Make sure to include the References section in your output.
   `;
 
     const cacheKey = `document:${type}:${userId}:${url}`;
@@ -82,6 +83,15 @@ export async function generateDocument(type: string, url: string, userId: string
         // Cache the result
         await redis.set(cacheKey, JSON.stringify(parsedOutput), { ex: 3600 });
 
+        // Update the job status in the database
+        await prisma.job.update({
+          where: { id: userId },
+          data: { 
+            status: 'completed',
+            //result: parsedOutput
+          }
+        });
+
         return parsedOutput;
       } catch (jsonError) {
         console.error("Error parsing AI output:", jsonError);
@@ -93,9 +103,18 @@ export async function generateDocument(type: string, url: string, userId: string
     }
   } catch (error) {
     console.error("Error generating document:", error);
+    
+    // Update the job status in the database
+    await prisma.job.update({
+      where: { id: userId },
+      data: { 
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error occurred.'
+      }
+    });
+
     return { 
-      error: true,
-      output: `Error: Unable to generate document. ${error instanceof Error ? error.message : 'Unknown error occurred.'}`
+      error: `Error: Unable to generate document. ${error instanceof Error ? error.message : 'Unknown error occurred.'}`
     };
   }
 }
