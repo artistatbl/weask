@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { generateDocument } from "@/lib/documentGenerator";
 import { prisma } from "@/lib/db";
+import { createJob } from "@/utils/types";
 
-export const POST = async (req: NextRequest) => {
+export async function POST(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user) {
@@ -27,22 +28,28 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
-    console.log('Generating document for URL:', url);
+    console.log(`Creating job for document generation. Type: ${type}, URL: ${url}`);
 
-    const document = await generateDocument(type, url, user.id);
-    if ('error' in document) {
-      console.error("Error in document generation:", document.output);
-      return NextResponse.json({ error: document.output }, { status: 400 });
-    }
-    console.log('Generated document:', document);
-    return NextResponse.json({ document });
+    const job = await createJob(type, url, dbUser.id);
 
-  } catch (error: Error | unknown) {
-    console.error("Document generation error:", error);
+    // Start the generation process in the background
+    generateDocument(type, url, job.id)
+      .then(() => {
+        console.log(`Document generation process initiated for job ${job.id}`);
+      })
+      .catch((error) => {
+        console.error(`Error initiating document generation for job ${job.id}:`, error);
+      });
+
+    // Immediately return the job ID
+    return NextResponse.json({ jobId: job.id }, { status: 202 });
+
+  } catch (error: unknown) {
+    console.error("Unexpected error:", error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
       { error: "An unexpected error occurred.", details: errorMessage },
       { status: 500 }
     );
   }
-};
+}

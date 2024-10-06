@@ -1,6 +1,7 @@
 import { ragChat } from "@/lib/rag-chat";
 import { ratelimitConfig } from "@/lib/rateLimiter";
 import { redis } from "@/lib/redis";
+import { prisma } from "@/lib/db";
 
 interface GeneratedContent {
   title: string;
@@ -10,15 +11,21 @@ interface GeneratedContent {
   references: string[];
 }
 
-export async function generateDocument(type: string, url: string, userId: string) {
+export async function generateDocument(type: string, url: string, jobId: string): Promise<GeneratedContent | { error: string }> {
   try {
     console.log('Generating document for URL:', url);
 
+    // Fetch the job
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) {
+      throw new Error(`Job not found for jobId: ${jobId}`);
+    }
+
     // Rate limiting check
     if (ratelimitConfig.enabled && ratelimitConfig.ratelimit) {
-      const { success, reset, remaining } = await ratelimitConfig.ratelimit.limit(userId);
+      const { success, reset, remaining } = await ratelimitConfig.ratelimit.limit(job.userId);
       const resetInMinutes = Math.ceil((reset - Date.now()) / 60000);
-      console.log(`Rate limit check for user ${userId}: success=${success}, remaining=${remaining}, reset in ${resetInMinutes} minutes`);
+      console.log(`Rate limit check for user ${job.userId}: success=${success}, remaining=${remaining}, reset in ${resetInMinutes} minutes`);
       if (!success) {
         throw new Error(`Rate limit exceeded. Please try again in ${resetInMinutes} minutes.`);
       }
@@ -58,15 +65,17 @@ export async function generateDocument(type: string, url: string, userId: string
     Important:
     1. Use information only from the provided URL and its subpages.
     2. Do not include any external sources or made-up information.
-    3. Do not include the  heading:1 to 3 within the response, just just say the header name, dont have like the heading 1 on the output.
-    3. If you can't find enough information on a particular point, simply state that the information is not available on the website.
-    4. Make sure to include the References section in your output.
-  `;
+    3. Do not include the heading:1 to 3 within the response, just say the header name, don't have the heading 1 on the output.
+    4. If you can't find enough information on a particular point, simply state that the information is not available on the website.
+    5. Make sure to include the References section in your output.
+    `;
 
-    const cacheKey = `document:${type}:${userId}:${url}`;
+    const cacheKey = `document:${type}:${job.userId}:${url}`;
     const cachedResponse = await redis.get(cacheKey);
     if (cachedResponse && typeof cachedResponse === 'string') {
-      return JSON.parse(cachedResponse);
+      const parsedResponse = JSON.parse(cachedResponse);
+      await updateJobStatus(jobId, 'completed', parsedResponse);
+      return parsedResponse;
     }
 
     const chatResponse = await ragChat.chat(prompt, { streaming: false });
@@ -74,13 +83,13 @@ export async function generateDocument(type: string, url: string, userId: string
     if ('output' in chatResponse && typeof chatResponse.output === 'string') {
       console.log('Raw AI output:', chatResponse.output);
 
-      // Check if the output is valid JSON
       try {
         const parsedOutput = parseGeneratedContent(chatResponse.output);
         console.log('Parsed output:', parsedOutput);
 
-        // Cache the result
-        await redis.set(cacheKey, JSON.stringify(parsedOutput), { ex: 3600 });
+        await redis.set(cacheKey, JSON.stringify(parsedOutput), { ex: 3600 }); // Cache for 1 hour
+
+        await updateJobStatus(jobId, 'completed', parsedOutput);
 
         return parsedOutput;
       } catch (jsonError) {
@@ -93,10 +102,29 @@ export async function generateDocument(type: string, url: string, userId: string
     }
   } catch (error) {
     console.error("Error generating document:", error);
+    
+    await updateJobStatus(jobId, 'failed', undefined, error instanceof Error ? error.message : 'Unknown error occurred.');
+
     return { 
-      error: true,
-      output: `Error: Unable to generate document. ${error instanceof Error ? error.message : 'Unknown error occurred.'}`
+      error: `Error: Unable to generate document. ${error instanceof Error ? error.message : 'Unknown error occurred.'}`
     };
+  }
+}
+
+async function updateJobStatus(jobId: string, status: 'completed' | 'failed', result?: GeneratedContent, error?: string): Promise<void> {
+  try {
+    await prisma.job.update({
+      where: { id: jobId },
+      data: { 
+        status,
+        result: result ? JSON.stringify(result) : undefined,
+        error,
+        updatedAt: new Date()
+      }
+    });
+  } catch (updateError) {
+    console.error(`Failed to update job ${jobId}:`, updateError);
+    // You might want to implement a retry mechanism or additional error handling here
   }
 }
 
@@ -119,7 +147,6 @@ function parseGeneratedContent(output: string): GeneratedContent {
     } else if (heading.toLowerCase().includes('conclusion')) {
       conclusion = sectionContent;
     } else if (heading.toLowerCase().includes('heading')) {
-      // Remove "Heading X:" prefix
       const cleanHeading = heading.replace(/^Heading \d+:\s*/, '').trim();
       mainContent.push({
         heading: cleanHeading,
@@ -131,6 +158,10 @@ function parseGeneratedContent(output: string): GeneratedContent {
   });
 
   console.log('Parsed content:', { title, introduction, mainContent, conclusion, references });
+
+  if (!title || !introduction || mainContent.length === 0 || !conclusion || references.length === 0) {
+    throw new Error('Generated content is missing required fields');
+  }
 
   return {
     title,

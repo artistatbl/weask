@@ -99,6 +99,21 @@ CREATE TABLE "Invoice" (
     CONSTRAINT "Invoice_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Job" (
+    "id" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
+    "result" JSONB,
+    "error" TEXT,
+    "type" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Job_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -113,6 +128,9 @@ CREATE INDEX "ChatMessage_userId_sessionId_idx" ON "ChatMessage"("userId", "sess
 
 -- CreateIndex
 CREATE INDEX "SearchHistory_userId_domain_idx" ON "SearchHistory"("userId", "domain");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SearchHistory_userId_sessionId_domain_key" ON "SearchHistory"("userId", "sessionId", "domain");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Subscription_subscriptionId_key" ON "Subscription"("subscriptionId");
@@ -132,8 +150,17 @@ CREATE UNIQUE INDEX "Invoice_invoiceId_key" ON "Invoice"("invoiceId");
 -- CreateIndex
 CREATE INDEX "Invoice_clerkId_invoiceId_idx" ON "Invoice"("clerkId", "invoiceId");
 
+-- CreateIndex
+CREATE INDEX "Job_userId_url_idx" ON "Job"("userId", "url");
+
+-- CreateIndex
+CREATE INDEX "Job_status_idx" ON "Job"("status");
+
 -- AddForeignKey
 ALTER TABLE "ChatMessage" ADD CONSTRAINT "ChatMessage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SearchHistory" ADD CONSTRAINT "SearchHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Job" ADD CONSTRAINT "Job_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
