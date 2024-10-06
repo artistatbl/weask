@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db";
-import { Prisma } from '@prisma/client';
 
 export interface Message {
   id: string | number;
@@ -24,6 +23,8 @@ export interface GeneratedContent {
 }
 
 export type JobStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
+
+
 
 export interface Job {
   id: string;
@@ -67,8 +68,8 @@ export async function updateJob(
     where: { id },
     data: { 
       status, 
-      result: result ? (JSON.parse(JSON.stringify(result)) as Prisma.JsonValue) : undefined,
       error,
+      result: result ? JSON.stringify(result) : undefined,
       updatedAt: new Date()
     }
   });

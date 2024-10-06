@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo} from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { FileText, File, Copy, Search } from 'lucide-react'
+import { Copy, Search } from 'lucide-react'
 import {
   CommandDialog,
   CommandInput,
@@ -17,12 +17,14 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import  {saveSearchHistory}  from '@/app/actions/chat'
 import { getSearchHistory } from '@/lib/getSearchHistory'
-import { JobResult, GeneratedContent } from '@/utils/types';
+import { GeneratedContent } from '@/utils/types';
+import { reportTypes, getReportTypeById, ReportType } from '@/types/report'
 
 
-import { useAuth } from '@clerk/nextjs'; // Add this import
+
+
+import { useAuth } from '@clerk/nextjs'; 
 import LoadingPage from './home/LoadingGenerate'
-
 
 
 interface SearchHistoryItem {
@@ -32,9 +34,6 @@ interface SearchHistoryItem {
   visitedAt: string;
 }
 
-// interface ErrorResponse {
-//   error?: string;
-// }
 
  export const  CommandK: React.FC = () => {
   const [open, setOpen] = useState(false)
@@ -44,10 +43,16 @@ interface SearchHistoryItem {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const { isSignedIn, isLoaded } = useAuth(); // Add this line
-
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [currentReportType, setCurrentReportType] = useState<ReportType | null>(null);
+
+
+
+
+ 
+
 
 
 
@@ -178,9 +183,23 @@ interface SearchHistoryItem {
   // Generate function for eassay and  report
 // ... (other imports)
 
-const handleGenerate = async (type: string) => {
+const handleGenerate = async (reportTypeId: string) => {
+  const reportType = getReportTypeById(reportTypeId);
+  if (!reportType) {
+    toast({
+      title: 'Error',
+      description: 'Invalid report type selected',
+      variant: 'destructive',
+    });
+    return;
+  }
+
   setIsGenerating(true);
   setOpen(false);
+  setDialogOpen(true);
+  setGeneratedContent(null);
+  setJobId(null);
+  setCurrentReportType(reportType);
 
   try {
     if (!currentUrl) {
@@ -191,18 +210,27 @@ const handleGenerate = async (type: string) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ type, url: currentUrl }),
+      body: JSON.stringify({ type: reportTypeId, url: currentUrl }),
     });
-    const data: { jobId: string } = await response.json();
+    const data = await response.json();
+    
+    console.log('API Response:', data);
+    
     if (!response.ok) {
-     // throw new Error(data || 'An error occurred while generating the document');
+      throw new Error(data.error || 'An error occurred while generating the document');
     }
 
-    setCurrentJobId(data.jobId);
+    if (!data.jobId) {
+      throw new Error('No job ID returned from the API');
+    }
+
+    setJobId(data.jobId);
+    pollJobStatus(data.jobId);
 
   } catch (error) {
     console.error('Generation error:', error);
-    let errorMessage = `There was an error generating the ${type}. Please try again.`
+    let errorMessage = `There was an error generating the ${reportType
+    }. Please try again.`
     if (error instanceof Error) {
       errorMessage = error.message;
     }
@@ -211,30 +239,55 @@ const handleGenerate = async (type: string) => {
       description: errorMessage,
       variant: 'destructive',
     });
+    setDialogOpen(false);
     setIsGenerating(false);
   }
 };
 
-const handleGenerationComplete = (result: JobResult) => {
-  if (result.status === 'completed' && result.result) {
-    setGeneratedContent(result.result);
-    setIsExpanded(true);
-    setTimeout(() => setDialogOpen(true), 300);
-  } else if (result.status === 'failed') {
+const pollJobStatus = async (jobId: string) => {
+  try {
+    const response = await fetch(`/api/job-status?jobId=${jobId}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'An error occurred while checking job status');
+    }
+
+    if (data.status === 'completed' && data.result) {
+      setGeneratedContent(data.result);
+      setIsExpanded(true);
+      setIsGenerating(false);
+      toast({
+        title: 'Success',
+        description: `Your document has been generated successfully!`,
+        variant: 'success',
+        duration: 5000,
+      });
+    } else if (data.status === 'failed') {
+      throw new Error(data.error || 'Document generation failed');
+    } else {
+      // Job is still in progress, continue polling
+      setTimeout(() => pollJobStatus(jobId), 2000); // Poll every 2 seconds
+    }
+  } catch (error) {
+    console.error('Job status check error:', error);
+    let errorMessage = 'An error occurred while generating the document. Please try again.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     toast({
-      title: 'Generation Failed',
-      description: result.error || 'An unknown error occurred',
+      title: 'Error',
+      description: errorMessage,
       variant: 'destructive',
     });
+    setDialogOpen(false);
+    setIsGenerating(false);
   }
-  setIsGenerating(false);
-  setCurrentJobId(null);
 };
 
 
 
-
-   
+////      //////////////////////////////////////////////////////////////////   
   const copyToClipboard = () => {
     if (!generatedContent) {
       toast({
@@ -360,7 +413,7 @@ const handleGenerationComplete = (result: JobResult) => {
                   ))}
                 </CommandGroup>
               )}
-              <CommandGroup heading="Generate">
+              {/* <CommandGroup heading="Generate">
                 <CommandItem onSelect={() => handleGenerate('essay')}>
                   <FileText className="mr-2 h-4 w-4" />
                   <span>Generate Essay</span>
@@ -369,13 +422,22 @@ const handleGenerationComplete = (result: JobResult) => {
                   <File className="mr-2 h-4 w-4" />
                   <span>Generate Report</span>
                 </CommandItem>
-              </CommandGroup>
+              </CommandGroup> */}
+                  <CommandGroup heading="Generate">
+          {reportTypes.map((reportType) => (
+            <CommandItem key={reportType.id} onSelect={() => handleGenerate(reportType.id)}>
+              <reportType.icon className="mr-2 h-4 w-4" />
+              <span>Generate {reportType.name}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
             </CommandList>
           </CommandDialog>
-          <Dialog open={isGenerating || dialogOpen} onOpenChange={(open) => {
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
             if (!open) {
               setDialogOpen(false);
               setIsExpanded(false);
+              setJobId(null);
             }
           }}>
             <DialogContent className={`
@@ -384,18 +446,36 @@ const handleGenerationComplete = (result: JobResult) => {
                 ? "w-full max-w-[95vw] h-[95vh] sm:max-w-[90vw] md:max-w-[80vw] lg:max-w-4xl xl:max-w-5xl"
                 : "w-[90vw] max-w-md h-[300px]"
               } 
-              p-0 bg-white dark:bg-zinc-900 overflow-hidden
+              p-0 bg-zinc-800  text-gray-200 dark:bg-zinc-900 overflow-hidden border-orange-600 border
             `}>
-              {isGenerating && currentJobId && (
-                <LoadingPage 
-                  jobId={currentJobId} 
-                  onComplete={handleGenerationComplete} 
-                />
-              )}
+              {isGenerating && (
+  <div className="  w-full h-full">
+    {currentReportType && (
+      <LoadingPage 
+        reportType={currentReportType}
+        onComplete={() => {
+         // console.log('Loading animation completed');
+        }}
+      />
+    )}
+    {jobId && (
+      <span className="sr-only">
+        Job ID: {jobId}
+      </span>
+    )}
+  </div>
+)}
+
+
+
+
+
+
+
               {!isGenerating && (
                 <div className="h-full flex flex-col">
-                  <div className="flex justify-between items-center p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
+                  <div className="flex justify-between items-center p-2 sm:p-4 border-b border-orange-600 dark:border-gray-700">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold  dark:text-gray-100 truncate">
                       {generatedContent?.title || 'Generated Content'}
                     </h2>
                     <Button
@@ -409,21 +489,25 @@ const handleGenerationComplete = (result: JobResult) => {
                     </Button>
                   </div>
                   <ScrollArea className="flex-grow px-2 sm:px-4 md:px-6 py-2 sm:py-4 h-[calc(95vh-8rem)]">
-                    <div className="space-y-3 sm:space-y-4 md:space-y-6 text-gray-700 dark:text-gray-300">
+                  
+                
+                      
+                    
+                    <div className="space-y-3 sm:space-y-4 md:space-y-6  dark:text-gray-300">
                       {generatedContent?.introduction && (
                         <section>
-                          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Introduction</h3>
-                          <p className="text-sm sm:text-base md:text-lg leading-relaxed">{generatedContent.introduction}</p>
+                          <h3 className="text-base sm:text-lg md:text-xl font-semibold  dark:text-gray-100 mb-2">Introduction</h3>
+                          <p className="text-sm sm:text-base md:text-lg leading-relaxed ">{generatedContent.introduction}</p>
                         </section>
                       )}
                       {generatedContent?.mainContent && generatedContent.mainContent.length > 0 && (
                         <section>
-                          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4">Main Content</h3>
+                          <h3 className="text-base sm:text-lg md:text-xl font-semibold  dark:text-gray-100 mb-2 sm:mb-3 md:mb-4">Main Content</h3>
                           {generatedContent.mainContent.map((section, index) => (
                             <div key={index} className="mb-3 sm:mb-4 md:mb-6">
-                              <h4 className="text-sm sm:text-base md:text-lg font-medium text-gray-800 dark:text-gray-200 mb-1 sm:mb-2">{section.heading}</h4>
+                              <h4 className="text-sm sm:text-base md:text-lg font-medium  dark:text-gray-200 mb-1 sm:mb-2">{section.heading}</h4>
                               {section.paragraphs.map((paragraph, pIndex) => (
-                                <p key={pIndex} className="mb-2 text-xs sm:text-sm md:text-base leading-relaxed">{paragraph}</p>
+                                <p key={pIndex} className="mb-2 text-xs sm:text-sm md:text-base leading-relaxed ">{paragraph}</p>
                               ))}
                             </div>
                           ))}
@@ -431,26 +515,27 @@ const handleGenerationComplete = (result: JobResult) => {
                       )}
                       {generatedContent?.conclusion && (
                         <section>
-                          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Conclusion</h3>
-                          <p className="text-sm sm:text-base md:text-lg leading-relaxed">{generatedContent.conclusion}</p>
+                          <h3 className="text-base sm:text-lg md:text-xl font-semibold  dark:text-gray-100 mb-2">Conclusion</h3>
+                          <p className="text-sm sm:text-base md:text-lg   leading-relaxed">{generatedContent.conclusion}</p>
                         </section>
                       )}
                       {generatedContent?.references && generatedContent.references.length > 0 && (
                         <section>
-                          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">References</h3>
+                          <h3 className="text-base sm:text-lg md:text-xl font-semibold  dark:text-gray-100 mb-2">References</h3>
                           <ul className="list-disc pl-4 sm:pl-5 space-y-1">
                             {generatedContent.references.map((reference, index) => (
-                              <li key={index} className="text-xs sm:text-sm md:text-base leading-relaxed">{reference}</li>
+                              <li key={index} className="text-xs sm:text-sm md:text-base leading-relaxed ">{reference}</li>
                             ))}
                           </ul>
                         </section>
                       )}
                     </div>
                   </ScrollArea>
-                  <div className="p-2 sm:p-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="p-2 sm:p-4 border-t border-orange-600 dark:border-gray-700">
                     <Button 
                       onClick={copyToClipboard} 
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 sm:py-2 rounded-md transition duration-200 ease-in-out text-xs sm:text-sm md:text-base"
+                      className="w-full bg-orange-600  hover:bg-orange-800
+                     text-white py-2 md:py-2 rounded-md transition duration-200 ease-in-out text-xs sm:text-sm md:text-base"
                       disabled={!generatedContent}
                     >
                       <Copy className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />

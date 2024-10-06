@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { generateDocument } from "@/lib/documentGenerator";
 import { prisma } from "@/lib/db";
-import { createJob, updateJob } from "@/utils/types";
+import { createJob } from "@/utils/types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,22 +28,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
-    console.log('Generating document for URL:', url);
+    console.log(`Creating job for document generation. Type: ${type}, URL: ${url}`);
 
     const job = await createJob(type, url, dbUser.id);
 
     // Start the generation process in the background
-    generateDocument(type, url, dbUser.id)
-      .then(async (document) => {
-        if ('error' in document) {
-          await updateJob(job.id, 'failed', null, document.output);
-        } else {
-          await updateJob(job.id, 'completed', document);
-        }
+    generateDocument(type, url, job.id)
+      .then(() => {
+        console.log(`Document generation process initiated for job ${job.id}`);
       })
-      .catch(async (error) => {
-        console.error("Document generation error:", error);
-        await updateJob(job.id, 'failed', null, error.message);
+      .catch((error) => {
+        console.error(`Error initiating document generation for job ${job.id}:`, error);
       });
 
     // Immediately return the job ID
