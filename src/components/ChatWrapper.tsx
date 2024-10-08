@@ -106,7 +106,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
 
   return (
     <div className="flex h-screen w-full body">
-      <HomeSidebar recentUrls={recentUrls} />
+      <HomeSidebar initialRecentUrls={recentUrls} />
       <PanelGroup direction="horizontal" className="flex-1">
         <Panel defaultSize={50} minSize={30}>
           <div className="flex flex-col h-full">
@@ -131,8 +131,8 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
           </div>
         </Panel>
         <PanelResizeHandle className="resize-handle flex items-center justify-center">
-          <div className="resize-handle-inner bg-zinc-700 hover:bg-zinc-500 transition-colors duration-200 flex items-center justify-center">
-            <GripVertical className="text-zinc-950 w-10 h-10 pr-3 text-center" />
+          <div className="resize-handle-inner border border-orange-500 bg-zinc-700 hover:bg-zinc-500 transition-colors duration-200 flex items-center justify-center">
+            <GripVertical className="text-orange-600 w-10 h-10 pr-3 text-center" />
           </div>
         </PanelResizeHandle>
         <Panel defaultSize={50} minSize={30}>

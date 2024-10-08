@@ -87,12 +87,12 @@ interface SearchHistoryItem {
   useEffect(() => {
     const fetchSearchHistory = async () => {
       if (isLoaded && isSignedIn) {
-        console.log('Fetching search history...');
+        // console.log('Fetching search history...');
         const result = await getSearchHistory()
-        console.log('Search history fetch result:', result);
+        // console.log('Search history fetch result:', result);
         if (result.status === 200) {
           setSearchHistory(result.data)
-          console.log('Search history set:', result.data);
+          // console.log('Search history set:', result.data);
         } else {
           console.error('Failed to fetch search history:', result.message);
           toast({
@@ -108,8 +108,8 @@ interface SearchHistoryItem {
 
   
   const filteredSearchHistory = useMemo(() => {
-    console.log('Filtering search history. Current searchTerm:', searchTerm);
-    console.log('Current searchHistory:', searchHistory);
+    // console.log('Filtering search history. Current searchTerm:', searchTerm);
+    // console.log('Current searchHistory:', searchHistory);
     
     if (!searchTerm) return searchHistory;
 
@@ -130,7 +130,7 @@ interface SearchHistoryItem {
       );
     });
 
-    console.log('Filtered search history:', filtered);
+    // console.log('Filtered search history:', filtered);
     return filtered;
   }, [searchHistory, searchTerm]);
 
@@ -157,7 +157,7 @@ interface SearchHistoryItem {
       const saveResult = await saveSearchHistory(submittedUrl, newSessionId)
       if (saveResult.status !== 200) {
         console.error('Error saving search history:', saveResult.message)
-        console.log(saveSearchHistory)
+        // console.log(saveSearchHistory)
       }
 
       toast({
@@ -214,7 +214,7 @@ const handleGenerate = async (reportTypeId: string) => {
     });
     const data = await response.json();
     
-    console.log('API Response:', data);
+    // console.log('API Response:', data);
     
     if (!response.ok) {
       throw new Error(data.error || 'An error occurred while generating the document');
@@ -259,7 +259,7 @@ const pollJobStatus = async (jobId: string) => {
       setIsGenerating(false);
       toast({
         title: 'Success',
-        description: `Your document has been generated successfully!`,
+        description: `Your ${reportTypes[0].name} has been generated successfully!  `,
         variant: 'success',
         duration: 5000,
       });
@@ -389,7 +389,7 @@ const pollJobStatus = async (jobId: string) => {
               placeholder="Type a command or search..." 
               value={searchTerm}
               onValueChange={(value) => {
-                console.log('Search term changed:', value);
+                // console.log('Search term changed:', value);
                 setSearchTerm(value);
               }}
             />

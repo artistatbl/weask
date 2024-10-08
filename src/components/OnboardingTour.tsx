@@ -50,19 +50,19 @@ function OnboardingTourComponent() {
     const isChatPage = pathname && pathname.startsWith('/chat/');
     const hasSeenTour = localStorage.getItem('hasSeenChatTour');
     
-    console.log('Current pathname:', pathname);
-    console.log('Is chat page:', isChatPage);
-    console.log('Has seen tour:', hasSeenTour);
-    console.log('Is signed in:', isSignedIn);
+    // console.log('Current pathname:', pathname);
+    // console.log('Is chat page:', isChatPage);
+    // console.log('Has seen tour:', hasSeenTour);
+    // console.log('Is signed in:', isSignedIn);
 
     if (isSignedIn && isChatPage && !hasSeenTour) {
-      console.log('Starting tour in 5 seconds...');
+      // console.log('Starting tour in 5 seconds...');
       setTimeout(() => {
         const filteredSteps = steps.filter(step => 
           step.target === 'body' || document.querySelector(step.target as string)
         );
         setValidSteps(filteredSteps);
-        console.log('Valid steps:', filteredSteps);
+        // console.log('Valid steps:', filteredSteps);
         setRun(true);
       },6000);
     }
@@ -71,7 +71,7 @@ function OnboardingTourComponent() {
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status, index, type, action } = data;
     
-    console.log('Joyride callback:', { status, index, type, action });
+    // console.log('Joyride callback:', { status, index, type, action });
 
     if ([(STATUS.FINISHED as string), (STATUS.SKIPPED as string)].includes(status as string)) {
       console.log('Tour finished or skipped');
@@ -106,7 +106,7 @@ function OnboardingTourComponent() {
     localStorage.setItem('hasSeenChatTour', 'true');
   };
 
-  console.log('Rendering Joyride with run:', run, 'and stepIndex:', stepIndex);
+  // console.log('Rendering Joyride with run:', run, 'and stepIndex:', stepIndex);
 
   return (
     <Joyride

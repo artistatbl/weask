@@ -7,10 +7,12 @@ import FAQ from "@/components/global/faq";
 import UrlForm from "@/components/UrlForm";
 import { SafariDemo } from "@/components/global/safari";
 import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
-import { TabsDemo } from "@/components/global/featureSection";
+// import { TabsDemo } from "@/components/global/featureSection";
 import Comparison from "@/components/global/comparison";
-import { MarqueeDemo } from "@/components/global/marquee";
+// import { MarqueeDemo } from "@/components/global/marquee";
 import GradualSpacing from "@/components/ui/gradual-spacing";
+import Community from "@/components/global/community";
+import KeyBenefits from "@/components/global/benefits";
 
 export default function LandingPage() {
   return (
@@ -45,11 +47,14 @@ export default function LandingPage() {
     </div>
   </div>
 </section>
-        <MarqueeDemo/>
+        {/* <MarqueeDemo/> */}
+        <Community />
 
         <Comparison/>
         <HowItWorks />
-        <TabsDemo/>
+
+        <KeyBenefits/>
+
 
      
 

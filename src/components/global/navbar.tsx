@@ -22,7 +22,6 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { name: 'Home', href: '/' },
-  // { name: 'Features', href: '/features' },
   { name: 'Pricing', href: '/pricing' },
   { name: 'Blog', href: '/blog' },
 ];
@@ -38,7 +37,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg backdrop-brightness-100 justify-between bg-white/80 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -47,7 +46,7 @@ const Navbar = () => {
                 <svg className="h-8 w-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                 </svg>
-                <span className="ml-2 text-xl font-bold text-gray-900">NexusFlow</span>
+                <span className="ml-2 text-xl font-bold text-gray-900">Konect</span>
               </Link>
             </div>
           </div>
@@ -130,7 +129,7 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-    </nav>
+    </header>
   );
 };
 

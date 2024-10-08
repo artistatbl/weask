@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { ReportType } from '@/types/report';
-import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { Progress } from "@/components/ui/progress"
 
 interface LoadingPageProps {
   reportType: ReportType;
@@ -12,6 +12,7 @@ interface LoadingPageProps {
 
 const LoadingPage: React.FC<LoadingPageProps> = ({ reportType, onComplete }) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,6 +25,11 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ reportType, onComplete }) => 
         }
         return newTime;
       });
+
+      setProgress((prevProgress) => {
+        const newProgress = prevProgress + (100 / reportType.estimatedTime);
+        return Math.min(newProgress, 100);
+      });
     }, 1000);
 
     setTimeRemaining(reportType.estimatedTime);
@@ -31,30 +37,38 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ reportType, onComplete }) => 
     return () => clearInterval(interval);
   }, [reportType.estimatedTime, onComplete]);
 
+  // const getReportIcon = () => {
+  //   switch (reportType.name.toLowerCase()) {
+  //     case 'code analysis':
+  //       return <Code className="w-12 h-12 text-orange-500" />;
+  //     case 'financial report':
+  //       return <PieChart className="w-12 h-12 text-orange-500" />;
+  //     default:
+  //       return <FileText className="w-12 h-12 text-orange-500" />;
+  //   }
+  // };
+
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 text-white p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center"
-      >
-        <h2 className="text-2xl font-bold mb-2">Generating {reportType.name}</h2>
-        <p className="text-zinc-400 mb-4">Please wait while we create your content</p>
+    <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-800 text-white p-8">
+   
+       
+        <h2 className="text-3xl font-bold mt-4 mb-2">Generating {reportType.name}</h2>
+        <p className="text-zinc-400 mb-6">Please wait while we create your content</p>
+
+        <div className="mb-4">
+          <Progress value={progress} className="h-2 bg-zinc-700" />
+        </div>
 
         <div className="flex items-center justify-center space-x-2 text-zinc-400">
-          <Loader2 className="w-8 h-8 animate-spin " />
-          <span className='text-orange-600'>{timeRemaining} seconds remaining</span>
+          <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+          <span className="text-orange-500 font-medium">{timeRemaining} seconds remaining</span>
         </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-        className="mt-6 text-center"
-      >
-      </motion.div>
+    
+        {/* <p className="text-zinc-500 text-sm">
+          We&apos;re analyzing your data and preparing a comprehensive {reportType.name.toLowerCase()}. 
+          This process ensures the highest quality results for your needs.
+        </p> */}
+    
     </div>
   );
 };

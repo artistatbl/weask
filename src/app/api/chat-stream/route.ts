@@ -18,7 +18,6 @@ async function checkRateLimit(userId: string, retries = 0): Promise<{ success: b
   } catch (error) {
     console.error("Rate limit error:", error);
     if (retries < MAX_RETRIES) {
-      console.log(`Retrying rate limit check (${retries + 1}/${MAX_RETRIES})`);
       return checkRateLimit(userId, retries + 1);
     }
     throw error;
@@ -51,10 +50,7 @@ export const POST = async (req: NextRequest) => {
 
     const body = await req.json();
     const { messages, sessionId, userPlan, indexedUrl } = body;
-    
-    console.log("Received request body:", body);
-    console.log("Received sessionId:", sessionId);
-    console.log("Received indexedUrl:", indexedUrl);
+   
     
 
     let extractedUrl = indexedUrl;
@@ -69,13 +65,10 @@ export const POST = async (req: NextRequest) => {
     if (!extractedUrl) {
       console.error("Failed to extract a valid URL");
       return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
-      // console.log(indexedUrl)
     }
 
-    console.log("Using indexedUrl:", extractedUrl);
 
     const response = await processChatStream(user, messages, sessionId, userPlan, extractedUrl);
-    console.log("Process chat stream response:", response);
     return aiUseChatAdapter(response);
   } catch (error: unknown) {
     console.error("Chat stream error:", error);
@@ -85,6 +78,7 @@ export const POST = async (req: NextRequest) => {
     console.error("Detailed error:", JSON.stringify(error, null, 2));
     return NextResponse.json(
       { error: "An unexpected error occurred.", details: error instanceof Error ? error.message : String(error) },
+      
       { status: 500 }
     );
   }
