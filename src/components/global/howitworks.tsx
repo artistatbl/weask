@@ -82,8 +82,8 @@ const HowItWorks = () => {
 
   return (
     <div className="bg-white text-gray-800 flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full">
-        <h1 className="text-5xl md:text-6xl font-bold text-center mb-12 relative">
+      <div className="max-w-7xl w-full">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-center mb-12 relative">
           How It <span className="text-orange-600">Works</span>
           <div className="absolute -top-8 -left-8 w-24 h-24 bg-orange-100 rounded-full z-0 animate-pulse opacity-50"></div>
         </h1>

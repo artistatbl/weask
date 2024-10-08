@@ -64,7 +64,7 @@ export default function UrlForm() {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto px-4">
       <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-grow border-orange-600 rounded-md border-1">
+        <div className="relative flex-grow border-black rounded-md border-1">
           <span className="absolute left-1 top-1/2 -translate-y-1/2 bg-zinc-900 text-white text-sm font-serif md:text-sm px-3 py-1 rounded">
             Url Link
           </span>

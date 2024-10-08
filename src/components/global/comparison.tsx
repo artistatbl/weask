@@ -18,8 +18,8 @@ const Comparison = () => {
 
   return (
     <div className="bg-white  text-gray-800 min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full">
-        <h1 className="text-5xl md:text-6xl font-bold text-center mb-12 relative">
+      <div className="max-w-7xl w-full">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-center mb-12 relative">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-orange-400">
             Revolutionize
           </span>

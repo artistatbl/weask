@@ -3,11 +3,11 @@ import { generateMockReview, MockReview } from '@/types/mockreivew'
 
 export default function Community() {
   return (
-    <section className="relative w-full flex flex-col items-center justify-center border-b-2 border-b-orange-200 dark:border-b-white bg-gradient-to-br from-orange-100 via-white to-orange-200 dark:from-neutral-900 dark:via-neutral-800 dark:to-orange-900 overflow-hidden">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_14px]"></div>
+    <section className="relative w-full flex flex-col items-center justify-center border-b-2 border-b-orange-200 dark:border-b-white bg-white dark:from-neutral-900 dark:via-neutral-800 dark:to-orange-900 overflow-hidden">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:70px_70px]"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_800px_at_100%_200px,rgba(255,140,50,0.1),transparent)]"></div>
       
-      <div className="relative w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+      <div className="text-5xl sm:text-6xl md:text-7xl font-black text-center mb-12 relative w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <h2 className="mb-8 sm:mb-12 lg:mb-16 text-center text-4xl sm:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-pink-600 animate-gradient-x">
           Loved by the Community
         </h2>
