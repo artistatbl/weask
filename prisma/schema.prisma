@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,11 +20,12 @@ model User {
   gender           String?
   profileimageurl  String?
   clerkId          String         @unique
-  subscription     String?
+  subscription     Subscription?
   chatMessages     ChatMessage[]
   searchHistories  SearchHistory[]
-  jobs      Job[]
-
+  jobs             Job[]
+  dailyChatCount   Int            @default(0)
+  lastChatReset    DateTime       @default(now())
 
   @@index([clerkId])
 }
@@ -49,23 +53,39 @@ model SearchHistory {
   @@unique([userId, sessionId, domain])
   @@index([userId, domain])
 }
+
 model Subscription {
-  id                      String   @id @default(uuid())
-  createdtime             DateTime @default(now())
-  subscriptionId          String   @unique
+  id                      String           @id @default(uuid())
+  createdtime             DateTime         @default(now())
+  subscriptionId          String           @unique
   stripeuserId            String
   status                  String
   startdate               String
   enddate                 String?
-  planid                  String
+  planId                  String
   defaultpaymentmethodid  String?
   email                   String
   clerkId                 String
+  dailyChatLimit          Int
+  user                    User             @relation(fields: [userId], references: [id])
+  userId                  String           @unique
+  plan                    SubscriptionPlan @relation(fields: [planId], references: [id])
 
   @@index([clerkId, subscriptionId])
 }
 
-
+model SubscriptionPlan {
+  id             String         @id @default(uuid())
+  createdAt      DateTime       @default(now())
+  planId         String         @unique
+  name           String         @unique
+  description    String
+  amount         Decimal
+  currency       String
+  interval       String
+  dailyChatLimit Int
+  subscriptions  Subscription[]
+}
 
 model Payment {
   id               String   @id @default(uuid())
@@ -80,19 +100,6 @@ model Payment {
   paymentIntent    String
 
   @@index([clerkId, stripeId])
-}
-
-
-
-model SubscriptionPlan {
-  id           String   @id @default(uuid())
-  createdAt    DateTime @default(now())
-  planId       String   @unique
-  name         String
-  description  String
-  amount       Decimal
-  currency     String
-  interval     String
 }
 
 model Invoice {
@@ -121,8 +128,6 @@ model Job {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-
 
   @@index([userId, url])
   @@index([status])

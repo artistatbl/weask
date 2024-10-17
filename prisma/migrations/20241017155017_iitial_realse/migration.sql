@@ -8,7 +8,8 @@ CREATE TABLE "User" (
     "gender" TEXT,
     "profileimageurl" TEXT,
     "clerkId" TEXT NOT NULL,
-    "subscription" TEXT,
+    "dailyChatCount" INTEGER NOT NULL DEFAULT 0,
+    "lastChatReset" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -45,12 +46,29 @@ CREATE TABLE "Subscription" (
     "status" TEXT NOT NULL,
     "startdate" TEXT NOT NULL,
     "enddate" TEXT,
-    "planid" TEXT NOT NULL,
+    "planId" TEXT NOT NULL,
     "defaultpaymentmethodid" TEXT,
     "email" TEXT NOT NULL,
     "clerkId" TEXT NOT NULL,
+    "dailyChatLimit" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
 
     CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SubscriptionPlan" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "planId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "amount" DECIMAL(65,30) NOT NULL,
+    "currency" TEXT NOT NULL,
+    "interval" TEXT NOT NULL,
+    "dailyChatLimit" INTEGER NOT NULL,
+
+    CONSTRAINT "SubscriptionPlan_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -67,20 +85,6 @@ CREATE TABLE "Payment" (
     "paymentIntent" TEXT NOT NULL,
 
     CONSTRAINT "Payment_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "SubscriptionPlan" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "planId" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "amount" DECIMAL(65,30) NOT NULL,
-    "currency" TEXT NOT NULL,
-    "interval" TEXT NOT NULL,
-
-    CONSTRAINT "SubscriptionPlan_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -136,13 +140,19 @@ CREATE UNIQUE INDEX "SearchHistory_userId_sessionId_domain_key" ON "SearchHistor
 CREATE UNIQUE INDEX "Subscription_subscriptionId_key" ON "Subscription"("subscriptionId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Subscription_userId_key" ON "Subscription"("userId");
+
+-- CreateIndex
 CREATE INDEX "Subscription_clerkId_subscriptionId_idx" ON "Subscription"("clerkId", "subscriptionId");
 
 -- CreateIndex
-CREATE INDEX "Payment_clerkId_stripeId_idx" ON "Payment"("clerkId", "stripeId");
+CREATE UNIQUE INDEX "SubscriptionPlan_planId_key" ON "SubscriptionPlan"("planId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "SubscriptionPlan_planId_key" ON "SubscriptionPlan"("planId");
+CREATE UNIQUE INDEX "SubscriptionPlan_name_key" ON "SubscriptionPlan"("name");
+
+-- CreateIndex
+CREATE INDEX "Payment_clerkId_stripeId_idx" ON "Payment"("clerkId", "stripeId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Invoice_invoiceId_key" ON "Invoice"("invoiceId");
@@ -161,6 +171,12 @@ ALTER TABLE "ChatMessage" ADD CONSTRAINT "ChatMessage_userId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "SearchHistory" ADD CONSTRAINT "SearchHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_planId_fkey" FOREIGN KEY ("planId") REFERENCES "SubscriptionPlan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Job" ADD CONSTRAINT "Job_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
