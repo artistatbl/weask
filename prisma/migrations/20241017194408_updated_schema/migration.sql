@@ -1,12 +1,25 @@
+-- CreateEnum
+CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'CANCELED', 'PAST_DUE', 'UNPAID');
+
+-- CreateEnum
+CREATE TYPE "InvoiceStatus" AS ENUM ('PAID', 'UNPAID', 'VOID');
+
+-- CreateEnum
+CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED');
+
+-- CreateEnum
+CREATE TYPE "JobType" AS ENUM ('ESSAY', 'REPORT', 'OTHER');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
-    "createdtime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "email" TEXT NOT NULL,
-    "firstname" TEXT,
-    "lastname" TEXT,
+    "firstName" TEXT,
+    "lastName" TEXT,
     "gender" TEXT,
-    "profileimageurl" TEXT,
+    "profileImageUrl" TEXT,
     "clerkId" TEXT NOT NULL,
     "dailyChatCount" INTEGER NOT NULL DEFAULT 0,
     "lastChatReset" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -40,14 +53,15 @@ CREATE TABLE "SearchHistory" (
 -- CreateTable
 CREATE TABLE "Subscription" (
     "id" TEXT NOT NULL,
-    "createdtime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "subscriptionId" TEXT NOT NULL,
-    "stripeuserId" TEXT NOT NULL,
-    "status" TEXT NOT NULL,
-    "startdate" TEXT NOT NULL,
-    "enddate" TEXT,
+    "stripeUserId" TEXT NOT NULL,
+    "status" "SubscriptionStatus" NOT NULL,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3),
     "planId" TEXT NOT NULL,
-    "defaultpaymentmethodid" TEXT,
+    "defaultPaymentMethodId" TEXT,
     "email" TEXT NOT NULL,
     "clerkId" TEXT NOT NULL,
     "dailyChatLimit" INTEGER NOT NULL,
@@ -60,6 +74,7 @@ CREATE TABLE "Subscription" (
 CREATE TABLE "SubscriptionPlan" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "planId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -96,7 +111,7 @@ CREATE TABLE "Invoice" (
     "amountPaid" DECIMAL(65,30) NOT NULL,
     "amountDue" DECIMAL(65,30),
     "currency" TEXT NOT NULL,
-    "status" TEXT NOT NULL,
+    "status" "InvoiceStatus" NOT NULL,
     "email" TEXT NOT NULL,
     "clerkId" TEXT,
 
@@ -106,10 +121,10 @@ CREATE TABLE "Invoice" (
 -- CreateTable
 CREATE TABLE "Job" (
     "id" TEXT NOT NULL,
-    "status" TEXT NOT NULL,
+    "status" "JobStatus" NOT NULL,
     "result" JSONB,
     "error" TEXT,
-    "type" TEXT NOT NULL,
+    "type" "JobType" NOT NULL,
     "url" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -150,6 +165,9 @@ CREATE UNIQUE INDEX "SubscriptionPlan_planId_key" ON "SubscriptionPlan"("planId"
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SubscriptionPlan_name_key" ON "SubscriptionPlan"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Payment_stripeId_key" ON "Payment"("stripeId");
 
 -- CreateIndex
 CREATE INDEX "Payment_clerkId_stripeId_idx" ON "Payment"("clerkId", "stripeId");

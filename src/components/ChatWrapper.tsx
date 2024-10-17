@@ -32,10 +32,11 @@ interface ChatWrapperProps {
 }
 
 export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, isAlreadyIndexed, recentUrls }) => {
-
   const [isLoading, setIsLoading] = useState(!isAlreadyIndexed);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isDailyLimitReached, setIsDailyLimitReached] = useState(false);
+
   const { messages, handleInputChange, handleSubmit, input, setInput } = useChat({
     api: "/api/chat-stream",
     body: { sessionId },
@@ -46,7 +47,12 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
     },
     onError: (error) => {
       console.error("Chat error:", error);
-      toast.error("An error occurred while sending your message");
+      if (error.message.includes("Daily chat limit reached")) {
+        setIsDailyLimitReached(true);
+        toast.error("You've reached your daily chat limit. Please upgrade your plan for more access.");
+      } else {
+        toast.error("An error occurred while sending your message");
+      }
       setIsChatLoading(false);
     },
   });
@@ -90,6 +96,10 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
   };
 
   const handleChatSubmit: typeof handleSubmit = (e, chatRequestOptions) => {
+    if (isDailyLimitReached) {
+      toast.error("You've reached your daily chat limit. Please upgrade your plan for more access.");
+      return;
+    }
     setIsChatLoading(true);
     handleSubmit(e, chatRequestOptions);
     setTimeout(scrollToBottom, 500);
@@ -109,8 +119,12 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
             </div>
             <ScrollArea ref={scrollAreaRef} className="flex-1 h-[calc(100vh-8rem)] bg-zinc-800">
               <div className="p-2 mb-32">
-                  <Messages messages={messages} isLoading={isChatLoading} />
-                
+                <Messages messages={messages} isLoading={isChatLoading} />
+                {/* {isDailyLimitReached && (
+                  <div className="bg-red-500 text-white p-4 rounded-md mt-4">
+                    You&apos;ve reached your daily chat limit. Please upgrade your plan for more access.
+                  </div>
+                )} */}
               </div>
             </ScrollArea>
             <div className="bg-zinc-700 p-4 sticky bottom-0 left-0 right-0">
@@ -120,6 +134,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
                 handleSubmit={handleChatSubmit}
                 setInput={setInput}
                 isLoading={isChatLoading}
+                isDisabled={isDailyLimitReached}
               />
             </div>
           </div>

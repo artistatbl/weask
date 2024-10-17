@@ -1,18 +1,70 @@
 "use server";
 
-import {prisma} from '@/lib/db';
+import { prisma } from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
-import { Message } from '../../../utils/types';
+import { Message } from '@/utils/types';
 
-// Add this custom error type at the top of the file
 type ChatError = Error & { status?: number };
 
-export const fetchChatMessages = async (sessionId: string, userPlan: string) => {
-  const user = await currentUser();
-  if (!user) return { status: 401, messages: [] };  // Ensure user is authenticated
+export async function getUserSubscription(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { clerkId: userId },
+    include: { subscription: true },
+  });
+
+  console.log("user",user?.subscription );
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user.subscription;
+  
+}
+
+export async function incrementDailyChatCount(userId: string) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   try {
-    // Fetch user from the database using Clerk's id
+    const updatedUser = await prisma.user.update({
+      where: { clerkId: userId },
+      data: {
+        dailyChatCount: {
+          increment: 1,
+        },
+        lastChatReset: {
+          set: today,
+        },
+      },
+    });
+
+    if (updatedUser.lastChatReset < today) {
+      // If it's a new day, reset the count to 1
+      return await prisma.user.update({
+        where: { clerkId: userId },
+        data: {
+          dailyChatCount: 1,
+          lastChatReset: today,
+        },
+      });
+    }
+
+    return updatedUser;
+  } catch (error: unknown) {
+    const typedError = error as { code: string }; // Type assertion
+    if (typedError.code === 'P2025') {
+      throw new Error("User not found");
+    }
+    throw error;
+  }
+}
+
+export async function fetchChatMessages(sessionId: string, userPlan: string) {
+  const user = await currentUser();
+  if (!user) return { status: 401, messages: [] };
+
+  try {
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
@@ -21,22 +73,19 @@ export const fetchChatMessages = async (sessionId: string, userPlan: string) => 
       return { status: 404, message: "User not found in database", messages: [] };
     }
 
-    // Determine message limit based on user plan
     const messageLimit = userPlan === 'premium' ? undefined : 10;
 
-    // Fetch messages using sessionId and userId
     const messages = await prisma.chatMessage.findMany({
       where: {
         sessionId: sessionId,
-        userId: dbUser.id,  // Use dbUser here
+        userId: dbUser.id,
       },
       orderBy: {
         createdAt: 'desc',
       },
-      take: messageLimit,  // Limit messages if not premium
+      take: messageLimit,
     });
 
-    // Map messages to the expected format
     const typedMessages: Message[] = messages.map(msg => ({
       id: msg.id.toString(),
       role: msg.role as 'user' | 'assistant' | 'system',
@@ -44,16 +93,16 @@ export const fetchChatMessages = async (sessionId: string, userPlan: string) => 
       createdAt: msg.createdAt,
     }));
 
-    return { status: 200, messages: typedMessages }; // Return messages
+    return { status: 200, messages: typedMessages };
 
   } catch (error: unknown) {
     console.error("Error fetching messages:", error);
     const chatError = error as ChatError;
     return { status: 400, message: chatError.message, messages: [] };
   }
-};
+}
 
-export const saveChatMessage = async (sessionId: string, message: Message) => {
+export async function saveChatMessage(sessionId: string, message: Message) {
   const user = await currentUser();
   if (!user) return { status: 401 };
 
@@ -66,7 +115,6 @@ export const saveChatMessage = async (sessionId: string, message: Message) => {
       return { status: 404, message: "User not found in database" };
     }
 
-    // Ensure the role is valid
     if (message.role !== 'user' && message.role !== 'assistant' && message.role !== 'system') {
       throw new Error('Invalid message role');
     }
@@ -86,9 +134,9 @@ export const saveChatMessage = async (sessionId: string, message: Message) => {
     const chatError = error as ChatError;
     return { status: 400, message: chatError.message };
   }
-};
+}
 
-export const saveSearchHistory = async (url: string, sessionId: string) => {
+export async function saveSearchHistory(url: string, sessionId: string) {
   const user = await currentUser();
   if (!user) return { status: 401 };
 
@@ -110,7 +158,7 @@ export const saveSearchHistory = async (url: string, sessionId: string) => {
         },
       },
       update: {
-        createdAt: new Date(), // Update the timestamp if the record exists
+        createdAt: new Date(),
       },
       create: {
         userId: dbUser.id,
@@ -125,4 +173,4 @@ export const saveSearchHistory = async (url: string, sessionId: string) => {
     const chatError = error as ChatError;
     return { status: 400, message: chatError.message };
   }
-};
+}

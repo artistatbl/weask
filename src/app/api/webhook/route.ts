@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   // Handle the webhook
   if (evt.type === 'user.created') {
-    const { id, email_addresses, first_name, last_name } = evt.data;
+    const { id, email_addresses, first_name, last_name, image_url } = evt.data;
     const email = email_addresses[0]?.email_address;
 
     try {
@@ -53,9 +53,10 @@ export async function POST(req: NextRequest) {
         data: {
           clerkId: id,
           email: email,
-          firstname: first_name || null,
-          lastname: last_name || null,
-          // Do not create a subscription here
+          firstName: first_name || null,
+          lastName: last_name || null,
+          profileImageUrl: image_url || null,
+          
         },
       });
 
