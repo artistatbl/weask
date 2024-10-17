@@ -8,7 +8,7 @@ const Layout = ({children}: Props) => {
   return (
     <div className="dark:text-white bg-white min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow flex items-center justify-center p-6">
+      <main className="flex-grow mt-16 mb-4 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           {children}
         </div>

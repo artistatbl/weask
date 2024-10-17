@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import React from "react";
 
@@ -11,7 +11,6 @@ export default function UrlForm() {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,29 +29,18 @@ export default function UrlForm() {
 
         setTimeout(() => {
           if (data.isEmbeddable) {
-            toast({
-              title: "Success",
-              description: "Website preview is available. Starting chat...",
-              variant: "success",
-            });
+            toast.success("Website preview is available. Starting chat...");
             router.push(`/chat/${encodeURIComponent(url)}`);
           } else {
-            toast({
-              title: "Website Preview Unavailable",
-              description: "This website cannot be embedded for preview.",
-              variant: "destructive",
-            });
+            toast.error("This website cannot be embedded for preview.");
           }
         }, 4000); // 3-second delay for the toast
       } catch (error) {
-        console.error("Error checking embeddability:", error);
-        setTimeout(() => {
-          toast({
-            title: "Error",
-            description: "Failed to check website preview availability.",
-            variant: "destructive",
-          });
-        }, 4000); // 3-second delay for the error toast
+        if (error instanceof Error) {
+          toast.error("An error occurred: " + error.message);
+        } else {
+          toast.error("An error occurred and it's not an instance of Error");
+        }
       } finally {
         setTimeout(() => {
           setIsLoading(false);
@@ -64,7 +52,7 @@ export default function UrlForm() {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto px-4">
       <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-grow border-orange-600 rounded-md border-1">
+        <div className="relative flex-grow border-black rounded-md border-1">
           <span className="absolute left-1 top-1/2 -translate-y-1/2 bg-zinc-900 text-white text-sm font-serif md:text-sm px-3 py-1 rounded">
             Url Link
           </span>

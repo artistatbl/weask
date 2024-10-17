@@ -4,6 +4,11 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 // Define protected routes
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
+  '/chat(.*)',
+  '/chat-history(.*)',
+  '/settings(.*)',
+  '/profile(.*)',
+  
    // Add this if you want to protect the webhook endpoint
   // Add any other protected routes here
 ]);

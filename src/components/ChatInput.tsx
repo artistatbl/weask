@@ -3,15 +3,15 @@
 import { Button, Textarea } from "@nextui-org/react";
 import { Send, Loader } from "lucide-react";
 import { type useChat } from "ai/react";
+import { FormEvent } from "react";
 
 type HandleInputChange = ReturnType<typeof useChat>["handleInputChange"];
-type HandleSubmit = ReturnType<typeof useChat>["handleSubmit"];
 type SetInput = ReturnType<typeof useChat>["setInput"];
 
 interface ChatInputProps {
   input: string;
   handleInputChange: HandleInputChange;
-  handleSubmit: HandleSubmit;
+  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
   setInput: SetInput;
   isLoading: boolean;
 }
@@ -22,12 +22,12 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput, is
       <div className="mx-2 flex flex-row gap-3 md:mx-4 md:last:mb-6 lg:mx-auto lg:max-w-2xl xl:max-w-3xl">
         <div className="relative flex h-full flex-1 items-stretch md:flex-col">
           <div className="relative flex flex-col w-full flex-grow p-4">
-            <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-              if (input.trim()) { // Check if input is not empty
+            <form onSubmit={(e: FormEvent<HTMLFormElement>) => {
+              if (input.trim()) {
                 handleSubmit(e);
                 setInput("");
               }
-              e.preventDefault(); // Prevent form submission if input is empty
+              e.preventDefault();
             }} className="relative">
               <Textarea
                 minRows={4}
@@ -37,8 +37,8 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput, is
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    if (input.trim()) { // Check if input is not empty
-                      handleSubmit(e as React.FormEvent<HTMLFormElement>);
+                    if (input.trim()) {
+                      handleSubmit(e as unknown as FormEvent<HTMLFormElement>);
                       setInput("");
                     }
                   }
@@ -52,7 +52,7 @@ export const ChatInput = ({ handleInputChange, handleSubmit, input, setInput, is
                 size="sm"
                 type="submit"
                 className="absolute z-10 border-2 border-black bg-gray-200 right-2 bottom-2"
-                disabled={isLoading || !input.trim()} // Disable button if input is empty
+                disabled={isLoading || !input.trim()}
               >
                 {isLoading ? <Loader className="size-4 animate-spin" /> : <Send className="size-4" />}
               </Button>

@@ -1,15 +1,15 @@
-// pages/api/search-history.ts or app/api/search-history/route.ts (depending on your Next.js setup)
-
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
-    console.log("Fetching search history...");
     const user = await currentUser();
     if (!user) {
-      console.log("Unauthorized: No user found");
+      console.error("Unauthorized: No user found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -18,7 +18,6 @@ export async function GET() {
     });
 
     if (!dbUser) {
-      console.log("User not found in database");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -33,7 +32,6 @@ export async function GET() {
       },
     });
 
-    console.log("Raw search histories:", recentSearchHistories);
 
     // Normalize URLs and remove duplicates
     const normalizedUrls = new Map();
@@ -50,7 +48,7 @@ export async function GET() {
     });
 
     const recentUrls = Array.from(normalizedUrls.values());
-    console.log("Processed recent URLs:", recentUrls);
+    // console.log("Processed recent URLs:", recentUrls);
 
     return NextResponse.json(recentUrls);
 

@@ -3,13 +3,13 @@
 import { ragChat } from "@/lib/rag-chat";
 import { prisma } from "@/lib/db";
 import { ratelimitConfig } from "@/lib/rateLimiter";
-import * as server from "@clerk/nextjs/server";
+// import * as server from "@clerk/nextjs/server";
+import {  User } from "@clerk/nextjs/server";
 import { redis } from "@/lib/redis";
 import { retryWithBackoff } from "@/lib/retry-backoff";
 import { RagChatResponse } from "@/types/ragChat";
 
-export async function processChatStream(user: server.User, messages: { content: string }[], sessionId: string, userPlan: string, indexedUrl: string) {
-  console.log("Received indexedUrl in processChatStream:", indexedUrl);
+export async function processChatStream(user: User, messages: { content: string }[], sessionId: string, userPlan: string, indexedUrl: string) {
 
   if (!indexedUrl) {
     console.warn("indexedUrl is not provided, using a default value");
@@ -37,7 +37,6 @@ export async function processChatStream(user: server.User, messages: { content: 
   // Updated context about the indexed URL
   const urlContext = `This conversation is about the content from the URL: ${indexedUrl}. Please provide responses based on the information indexed from this URL. If the user's question is unrelated, politely redirect them to the topic of the indexed URL.`;
   await ragChat.context.add(urlContext);
-  console.log("URL Context:", urlContext);
 
   const lastMessage = messages[messages.length - 1].content;
 

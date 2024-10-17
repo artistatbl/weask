@@ -36,32 +36,28 @@ function generateUrlTitle(url: string): string {
     const domain = hostParts.length > 1 ? hostParts[hostParts.length - 2] : hostParts[0];
     const pathSegments = urlObj.pathname.split('/').filter(Boolean);
     
-    // Generate prefix from domain
-  
-    // If prefix is empty (e.g., for numeric domains), use first 3 letters of domain
     const prefix = domain.slice(0, 3).toUpperCase();
 
     let content = '';
     if (pathSegments.length > 0) {
       content = pathSegments[pathSegments.length - 1]
-        .replace(/[-_]/g, ' ')  // Replace hyphens and underscores with spaces
-        .replace(/\.[^/.]+$/, '')  // Remove file extension if present
+        .replace(/[-_]/g, ' ')
+        .replace(/\.[^/.]+$/, '')
         .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())  // Capitalize each word
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
     }
 
-    const title = content ? `${prefix}: ${content}` : prefix;  // Changed from let to const
-    return title.length > 30 ? title.substring(0, 27) + '...' : title;  // Truncate if too long
+    const title = content ? `${prefix}: ${content}` : prefix;
+    return title.length > 30 ? title.substring(0, 27) + '...' : title;
   } catch (error) {
     console.error("Error generating URL title:", error);
-    return url.substring(0, 30);  // Fallback to truncated URL if parsing fails
+    return url.substring(0, 30);
   }
 }
 
 const Page = async ({ params }: PageProps) => {
   const user = await currentUser();
-  // console.log("Current user:", user ? user.id : "Not authenticated");
 
   if (!user) {
     console.log("Redirecting to sign in");
@@ -75,9 +71,7 @@ const Page = async ({ params }: PageProps) => {
   try {
     console.log("Checking if URL is already indexed");
     const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl) === 1;
-    // console.log("Is URL already indexed:", isAlreadyIndexed);
 
-    console.log("Fetching user from database");
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
@@ -86,7 +80,6 @@ const Page = async ({ params }: PageProps) => {
       return { status: 404, message: "User not found in database", messages: [] };
     }
 
-    console.log("Fetching messages for session");
     const dbMessages = await prisma.chatMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: "asc" },
@@ -99,12 +92,10 @@ const Page = async ({ params }: PageProps) => {
       createdAt: msg.createdAt,
     }));
 
-    // Fetch recent URLs
-    console.log("Fetching recent URLs");
     const recentSearchHistories = await prisma.searchHistory.findMany({
       where: { userId: dbUser.id },
       orderBy: { createdAt: 'desc' },
-      take: 10,  // Fetch more to account for potential duplicates
+      take: 10,
       select: {
         id: true,
         domain: true,
@@ -112,7 +103,6 @@ const Page = async ({ params }: PageProps) => {
       },
     });
 
-    // Normalize URLs and remove duplicates
     const normalizedUrls = new Map<string, RecentUrl>();
     recentSearchHistories.forEach(history => {
       const normalizedUrl = new URL(history.domain).toString();
@@ -128,20 +118,16 @@ const Page = async ({ params }: PageProps) => {
 
     const recentUrls: RecentUrl[] = Array.from(normalizedUrls.values()).slice(0, 5);
 
-    
-
     if (!isAlreadyIndexed) {
-      // console.log("URL not indexed, starting indexing process");
       try {
         const RagChatComponent = await ragChat;
         if (RagChatComponent && RagChatComponent.context && RagChatComponent.context.add) {
           await RagChatComponent.context.add({
             type: "html",
             source: reconstructedUrl,
-            config: { chunkOverlap: 50, chunkSize: 200 , },
+            config: { chunkOverlap: 50, chunkSize: 200 },
           });
           await redis.sadd("indexed-urls", reconstructedUrl);
-          // console.log("URL indexed successfully");
         } else {
           console.error("RagChat or its context is not available");
         }
@@ -149,13 +135,10 @@ const Page = async ({ params }: PageProps) => {
         console.error("Error during indexing:", error);
       }
     } else {
-      console.log("URL already indexed, skipping indexing process");
     }
 
-    console.log("Saving search history");
     await saveSearchHistory(reconstructedUrl, sessionId);
 
-    console.log("Rendering ChatWrapper");
     return (
       <ChatWrapper
         sessionId={sessionId}
@@ -164,7 +147,7 @@ const Page = async ({ params }: PageProps) => {
         recentUrls={recentUrls}
       />
     );
-  } catch (error: unknown) {  // Changed from any to unknown
+  } catch (error: unknown) {
     console.error("Error in Page component:", error);
     console.error("Error stack:", (error as Error).stack);
 

@@ -1,3 +1,4 @@
+"use client"
 import React from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
 import {
@@ -7,7 +8,8 @@ import {
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { UserButton, useUser } from "@clerk/nextjs";
-
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface RecentUrl {
   id: string;
@@ -16,8 +18,6 @@ interface RecentUrl {
   visitedAt: Date;
 }
 
-
-
 interface HomeSidebarProps {
   recentUrls: RecentUrl[];
 }
@@ -25,70 +25,94 @@ interface HomeSidebarProps {
 export function HomeSidebar({ recentUrls }: HomeSidebarProps) {
   const [open, setOpen] = React.useState(false);
   const { user } = useUser();
+  const [isClient, setIsClient] = React.useState(false);
 
-  // console.log("Rendering sidebar with recent URLs:", recentUrls);
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const router = useRouter();
 
   const fullName: string = user ? `${user.firstName} ${user.lastName}` : "";
 
-  return (
-    <Sidebar open={open} setOpen={setOpen}>
-      <SidebarBody className="justify-between gap-6">
-        <div className="flex flex-col flex-1 text-orange-600 overflow-y-auto overflow-x-hidden">
-          <Logo />
-          <nav className="mt-6 flex font-extralight text-orange-500 flex-col gap-2">
-            <SidebarLink
-              link={{
-                textColor: "text-orange-500",
+  const handleUrlClick = (url: string, title: string) => {
+    toast.success(`Redirecting to ${title}`);
+    setTimeout(() => {
+      if (router) {
+        router.push(`/chat/${encodeURIComponent(url)}`);
+      }
+    }, 1000);
+  };
 
-                label: "New Chat",
-                href: "#",
-                icon: (
-                  <IconBrandTabler className="text-orange-600 h-5 w-5 flex-shrink-0" />
-                ),
-              }}
-            />
+  React.useEffect(() => {
+    if (isClient) {
+      // Example usage of isClient
+      console.log("Client is active");
+    }
+  });
+
+  return (
+    <>
+      <Sidebar open={open} setOpen={setOpen}>
+        <SidebarBody className="justify-between gap-6">
+          <div className="flex flex-col flex-1 text-orange-600 overflow-y-auto overflow-x-hidden">
+            <Logo />
+            <nav className="mt-6 flex font-extralight text-orange-500 flex-col gap-2">
+              <SidebarLink
+                link={{
+                  textColor: "text-orange-500",
+                  label: "New Chat",
+                  href: "#",
+                  icon: (
+                    <IconBrandTabler className="text-orange-600 h-5 w-5 flex-shrink-0" />
+                  ),
+                }}
+              />
          
-            <div className="mt-4 transition-all duration-300 ease-in-out">
-              {open && (
-                <h3 className=" text-xs  text-white font-bold tracking-wider mb-1">Recents</h3>
-              )}
-              {recentUrls.map((recentUrl) => (
-                <SidebarLink
-                className=" rounded-md hover:bg-zinc-900 pl-1 "
-                  key={recentUrl.id}
-                  link={{
-                    label: recentUrl.title,
-                    textColor: "text-xs text-gray-300  font-extralight ",
-                    href: `/chat/${encodeURIComponent(recentUrl.url)}`,
-                    icon: (
-                      <IconLink className="text-gray-300  h-4 w-4 flex-shrink-0" />
-                    ),
-                  }}
-                />
-              ))}
-            </div>
-          </nav>
-        </div>
-        <div>
-          {user && (
-            <SidebarLink
-              link={{
-                label: fullName,
-                href: "#",
-                icon: (
-                  <UserButton/>
-                ),
-              }}
-            />
-          )}
-        </div>
-      </SidebarBody>
-    </Sidebar>
+              <div className="mt-4 transition-all duration-300 ease-in-out">
+                {open && (
+                  <h3 className="text-xs text-white font-bold tracking-wider mb-1">Recents</h3>
+                )}
+                {recentUrls && recentUrls.map((recentUrl) => (
+                  <div
+                    key={recentUrl.id}
+                    onClick={() => handleUrlClick(recentUrl.url, recentUrl.title)}
+                    className="cursor-pointer"
+                  >
+                    <SidebarLink
+                      className="rounded-md hover:bg-zinc-900 pl-1"
+                      link={{
+                        label: recentUrl.title,
+                        textColor: "text-xs text-gray-300 font-extralight",
+                        href: "#",
+                        icon: (
+                          <IconLink className="text-gray-300 h-4 w-4 flex-shrink-0" />
+                        ),
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </nav>
+          </div>
+          <div>
+            {user && (
+              <SidebarLink
+                link={{
+                  label: fullName,
+                  href: "#",
+                  icon: (
+                    <UserButton/>
+                  ),
+                }}
+              />
+            )}
+          </div>
+        </SidebarBody>
+      </Sidebar>
+    </>
   );
 }
-
-// ... rest of the code remains the same
-// ... rest of the code remains the same
 
 const Logo = () => {
   return (
