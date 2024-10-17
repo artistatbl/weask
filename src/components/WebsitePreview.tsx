@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Skeleton } from "@nextui-org/react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from 'sonner';
 import { AlertCircle } from 'lucide-react';
 
 interface WebsitePreviewProps {
@@ -80,15 +80,11 @@ const useEmbeddabilityCheck = (url: string) => {
 
 const WebsitePreview: React.FC<WebsitePreviewProps> = ({ url }) => {
   const { isLoading, isEmbeddable, error } = useEmbeddabilityCheck(url);
-  const { toast } = useToast();
+
 
   const handleIframeError = useCallback(() => {
-    toast({
-      title: "Website Preview Issue",
-      description: "Failed to load the website preview.",
-      variant: "destructive",
-    });
-  }, [toast]);
+    toast.error("Failed to load the website preview.");
+  }, []);
 
   return (
     <div className="h-full relative website-preview">

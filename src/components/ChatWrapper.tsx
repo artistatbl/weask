@@ -13,9 +13,8 @@ import { Message } from '@/utils/types'
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { saveChatMessage } from "@/app/actions/chat";
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { GripVertical } from 'lucide-react'; 
-import ErrorBoundary from "@/hooks/Error-Boundary";
 import LoadingPage from "@/components/LoadingPage";
 
 interface RecentUrl {
@@ -33,7 +32,7 @@ interface ChatWrapperProps {
 }
 
 export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, isAlreadyIndexed, recentUrls }) => {
-  const { toast } = useToast();
+
   const [isLoading, setIsLoading] = useState(!isAlreadyIndexed);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -47,11 +46,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
     },
     onError: (error) => {
       console.error("Chat error:", error);
-      toast({
-        title: "Error",
-        description: "An error occurred while sending your message",
-        variant: "destructive",
-      });
+      toast.error("An error occurred while sending your message");
       setIsChatLoading(false);
     },
   });
@@ -106,7 +101,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
 
   return (
     <div className="flex h-screen w-full body">
-      <HomeSidebar initialRecentUrls={recentUrls} />
+      <HomeSidebar recentUrls={recentUrls} />
       <PanelGroup direction="horizontal" className="flex-1">
         <Panel defaultSize={50} minSize={30}>
           <div className="flex flex-col h-full">
@@ -114,9 +109,8 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
             </div>
             <ScrollArea ref={scrollAreaRef} className="flex-1 h-[calc(100vh-8rem)] bg-zinc-800">
               <div className="p-2 mb-32">
-                <ErrorBoundary fallback={<div>Error rendering messages</div>}>
                   <Messages messages={messages} isLoading={isChatLoading} />
-                </ErrorBoundary>
+                
               </div>
             </ScrollArea>
             <div className="bg-zinc-700 p-4 sticky bottom-0 left-0 right-0">

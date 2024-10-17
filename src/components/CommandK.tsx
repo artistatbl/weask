@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect, useRef, useMemo} from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useToast } from '@/hooks/use-toast'
+
 import { Copy, Search } from 'lucide-react'
 import {
   CommandDialog,
@@ -25,6 +25,7 @@ import { reportTypes, getReportTypeById, ReportType } from '@/types/report'
 
 import { useAuth } from '@clerk/nextjs'; 
 import LoadingPage from './home/LoadingGenerate'
+import { toast } from 'sonner'
 
 
 interface SearchHistoryItem {
@@ -61,7 +62,7 @@ interface SearchHistoryItem {
 
   const router = useRouter()
   const pathname = usePathname()
-  const { toast } = useToast()
+ 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const isChatPage = useMemo(() => {
@@ -95,11 +96,7 @@ interface SearchHistoryItem {
           // console.log('Search history set:', result.data);
         } else {
           console.error('Failed to fetch search history:', result.message);
-          toast({
-            title: 'Error',
-            description: 'Failed to fetch search history',
-            variant: 'destructive',
-          })
+          toast.error('Failed to fetch search history');
         }
       }
     }
@@ -160,20 +157,12 @@ interface SearchHistoryItem {
         // console.log(saveSearchHistory)
       }
 
-      toast({
-        title: 'Redirecting',
-        description: "You're being redirected to the chatbox. Please wait...",
-        variant: 'success',
-      })
+      toast.success("You're being redirected to the chatbox. Please wait...")
       try {
         await router.push(`/chat/${encodeURIComponent(submittedUrl)}`)
       } catch (error) {
         console.error('Navigation error:', error)
-        toast({
-          title: 'Error',
-          description: 'There was an error redirecting you. Please try again.',
-          variant: 'destructive',
-        })
+        toast.error('There was an error redirecting you. Please try again.')
       } finally {
         // setIsSubmitting(false) // Remove this line
         setOpen(false)
@@ -186,11 +175,7 @@ interface SearchHistoryItem {
 const handleGenerate = async (reportTypeId: string) => {
   const reportType = getReportTypeById(reportTypeId);
   if (!reportType) {
-    toast({
-      title: 'Error',
-      description: 'Invalid report type selected',
-      variant: 'destructive',
-    });
+    toast.error('Invalid report type selected');
     return;
   }
 
@@ -234,11 +219,7 @@ const handleGenerate = async (reportTypeId: string) => {
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    toast({
-      title: 'Error',
-      description: errorMessage,
-      variant: 'destructive',
-    });
+    toast.error(errorMessage);
     setDialogOpen(false);
     setIsGenerating(false);
   }
@@ -257,12 +238,7 @@ const pollJobStatus = async (jobId: string) => {
       setGeneratedContent(data.result);
       setIsExpanded(true);
       setIsGenerating(false);
-      toast({
-        title: 'Success',
-        description: `Your ${reportTypes[0].name} has been generated successfully!  `,
-        variant: 'success',
-        duration: 5000,
-      });
+      toast.success(`Your ${reportTypes[0].name} has been generated successfully!  `);
     } else if (data.status === 'failed') {
       throw new Error(data.error || 'Document generation failed');
     } else {
@@ -275,11 +251,7 @@ const pollJobStatus = async (jobId: string) => {
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    toast({
-      title: 'Error',
-      description: errorMessage,
-      variant: 'destructive',
-    });
+    toast.error(errorMessage);
     setDialogOpen(false);
     setIsGenerating(false);
   }
@@ -290,11 +262,7 @@ const pollJobStatus = async (jobId: string) => {
 ////      //////////////////////////////////////////////////////////////////   
   const copyToClipboard = () => {
     if (!generatedContent) {
-      toast({
-        title: 'Error',
-        description: 'No content to copy. Please generate content first.',
-        variant: 'destructive',
-      })
+        toast.error('No content to copy. Please generate content first.');
       return;
     }
 
@@ -317,12 +285,8 @@ const pollJobStatus = async (jobId: string) => {
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
       navigator.clipboard.writeText(fullContent)
         .then(() => {
-          toast({
-            title: 'Success',
-            description: 'Content copied to clipboard',
-            variant: 'success',
+          toast.success('Content copied to clipboard');
           })
-        })
         .catch((err) => {
           console.error('Clipboard API failed:', err)
           fallbackCopyTextToClipboard(fullContent)
@@ -335,11 +299,7 @@ const pollJobStatus = async (jobId: string) => {
 
   const fallbackCopyTextToClipboard = (text: string) => {
     if (!textAreaRef.current) {
-      toast({
-        title: 'Error',
-        description: 'Failed to copy. Please try selecting and copying the text manually.',
-        variant: 'destructive',
-      })
+        toast.error('Failed to copy. Please try selecting and copying the text manually.');
       return;
     }
 
@@ -355,21 +315,13 @@ const pollJobStatus = async (jobId: string) => {
     try {
       const successful = document.execCommand('copy');
       if (successful) {
-        toast({
-          title: 'Success',
-          description: 'Content copied to clipboard',
-          variant: 'success',
-        })
+        toast.success('Content copied to clipboard');
       } else {
         throw new Error('Copy command was unsuccessful')
       }
     } catch (err) {
       console.error('Fallback copy failed:', err)
-      toast({
-        title: 'Error',
-        description: 'Failed to copy. Please try selecting and copying the text manually.',
-        variant: 'destructive',
-      })
+      toast.error('Failed to copy. Please try selecting and copying the text manually.')
     }
 
     textArea.style.top = '-9999px';
@@ -446,7 +398,7 @@ const pollJobStatus = async (jobId: string) => {
                 ? "w-full max-w-[95vw] h-[95vh] sm:max-w-[90vw] md:max-w-[80vw] lg:max-w-4xl xl:max-w-5xl"
                 : "w-[90vw] max-w-md h-[300px]"
               } 
-              p-0 bg-zinc-800  text-gray-200 dark:bg-zinc-900 overflow-hidden border-orange-600 border
+              p-0 bg-zinc-800  text-gray-200 dark:bg-zinc-900 overflow-hidden border-zinc-600 border
             `}>
               {isGenerating && (
   <div className="  w-full h-full">
@@ -474,7 +426,7 @@ const pollJobStatus = async (jobId: string) => {
 
               {!isGenerating && (
                 <div className="h-full flex flex-col">
-                  <div className="flex justify-between items-center p-2 sm:p-4 border-b border-orange-600 dark:border-gray-700">
+                  <div className="flex justify-between items-center p-2 sm:p-4 border-b border-zinc-600 dark:border-gray-700">
                     <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold  dark:text-gray-100 truncate">
                       {generatedContent?.title || 'Generated Content'}
                     </h2>
@@ -531,10 +483,10 @@ const pollJobStatus = async (jobId: string) => {
                       )}
                     </div>
                   </ScrollArea>
-                  <div className="p-2 sm:p-4 border-t border-orange-600 dark:border-gray-700">
+                  <div className="p-2 sm:p-4 border-t border-zinc-600 dark:border-gray-700">
                     <Button 
                       onClick={copyToClipboard} 
-                      className="w-full bg-orange-600  hover:bg-orange-800
+                      className="w-full bg-zinc-900  hover:bg-zinc-700
                      text-white py-2 md:py-2 rounded-md transition duration-200 ease-in-out text-xs sm:text-sm md:text-base"
                       disabled={!generatedContent}
                     >

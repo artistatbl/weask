@@ -23,7 +23,7 @@ const TermsSection: React.FC<TermsSectionProps> = ({ title, children, icon: Icon
 const TermsOfService: React.FC = () => (
     <>
     <Navbar/>
-  <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+  <div className="bg-gradient-to-br from-gray-50 to-gray-100 mt-12 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div className="max-w-4xl mx-auto">
       <h1 className="text-5xl font-bold mb-8 text-center text-gray-900 leading-tight">
         Nectlink <span className="text-orange-500">Terms of Service</span>

@@ -6,13 +6,19 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: [
-      'img.clerk.com',
-      'cdn.sanity.io',
-      'images.unsplash.com',
-      'assets.aceternity.com',
-      'avatar.vercel.sh',
-      'api.dicebear.com'
+    remotePatterns: [
+      {
+        hostname: 'img.clerk.com',
+        protocol: 'https',
+      },
+      {
+        hostname: 'cdn.sanity.io',
+        protocol: 'https',
+      },
+      {
+        hostname: 'api.dicebear.com',
+        protocol: 'https',
+      },
     ],
   },
   productionBrowserSourceMaps: true,

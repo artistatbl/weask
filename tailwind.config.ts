@@ -17,7 +17,7 @@ const config = {
   prefix: "",
   theme: {
   	container: {
-  		center: true,
+  		center: 'true',
   		padding: '2rem',
   		screens: {
   			'2xl': '1400px'
@@ -112,40 +112,46 @@ const config = {
   					backgroundPosition: 'bottom center'
   				}
   			},
-			  'gradient-x': {
-				'0%, 100%': {
-				  'background-size': '200% 200%',
-				  'background-position': 'left center',
-				},
-				'50%': {
-				  'background-size': '200% 200%',
-				  'background-position': 'right center',
-				},
-			  },
-			  'fade-in-up': {
-				'0%': {
-				  opacity: '0',
-				  transform: 'translateY(10px)',
-				},
-				'100%': {
-				  opacity: '1',
-				  transform: 'translateY(0)',
-				},
-			  },
-		
-  		
-
+  			'gradient-x': {
+  				'0%, 100%': {
+  					'background-size': '200% 200%',
+  					'background-position': 'left center'
+  				},
+  				'50%': {
+  					'background-size': '200% 200%',
+  					'background-position': 'right center'
+  				}
+  			},
+  			'fade-in-up': {
+  				'0%': {
+  					opacity: '0',
+  					transform: 'translateY(10px)'
+  				},
+  				'100%': {
+  					opacity: '1',
+  					transform: 'translateY(0)'
+  				}
+  			},
+  			'shiny-text': {
+  				'0%, 90%, 100%': {
+  					'background-position': 'calc(-100% - var(--shiny-width)) 0'
+  				},
+  				'30%, 60%': {
+  					'background-position': 'calc(100% + var(--shiny-width)) 0'
+  				}
+  			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-			'gradient-x': 'gradient-x 5s ease infinite',
-        'spin-slow': 'spin 8s linear infinite',
-        'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
+  			'gradient-x': 'gradient-x 5s ease infinite',
+  			'spin-slow': 'spin 8s linear infinite',
+  			'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
   			'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
   			'background-position-spin': 'background-position-spin 3000ms infinite alternate',
   			marquee: 'marquee var(--duration) infinite linear',
-  			'marquee-vertical': 'marquee-vertical var(--duration) linear infinite'
+  			'marquee-vertical': 'marquee-vertical var(--duration) linear infinite',
+  			'shiny-text': 'shiny-text 8s infinite'
   		}
   	}
   },

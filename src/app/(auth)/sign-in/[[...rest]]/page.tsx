@@ -41,7 +41,11 @@ export default function Page() {
             socialButtonsPlacement: 'top',
             socialButtonsVariant: 'blockButton',
           },
+        
         }} 
+         
+        // afterSignOutUrl="/"
+        //fallbackRedirectUrl="/dashboard"
       />
     </div>
   )

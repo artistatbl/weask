@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useDebouncedCallback } from 'use-debounce';
 
 interface CommandUrlFormProps {

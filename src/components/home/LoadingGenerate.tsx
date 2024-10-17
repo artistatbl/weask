@@ -37,16 +37,6 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ reportType, onComplete }) => 
     return () => clearInterval(interval);
   }, [reportType.estimatedTime, onComplete]);
 
-  // const getReportIcon = () => {
-  //   switch (reportType.name.toLowerCase()) {
-  //     case 'code analysis':
-  //       return <Code className="w-12 h-12 text-orange-500" />;
-  //     case 'financial report':
-  //       return <PieChart className="w-12 h-12 text-orange-500" />;
-  //     default:
-  //       return <FileText className="w-12 h-12 text-orange-500" />;
-  //   }
-  // };
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-800 text-white p-8">
@@ -63,11 +53,7 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ reportType, onComplete }) => 
           <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
           <span className="text-orange-500 font-medium">{timeRemaining} seconds remaining</span>
         </div>
-    
-        {/* <p className="text-zinc-500 text-sm">
-          We&apos;re analyzing your data and preparing a comprehensive {reportType.name.toLowerCase()}. 
-          This process ensures the highest quality results for your needs.
-        </p> */}
+  
     
     </div>
   );
