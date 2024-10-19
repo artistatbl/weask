@@ -52,6 +52,24 @@ model SearchHistory {
   @@index([userId, domain])
 }
 
+
+model SubscriptionPlan {
+  id             String         @id @default(uuid())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  planId         String         @unique
+  name           String         @unique
+  description    String
+  price          Decimal
+  yearlyPrice    Decimal?
+  currency       String
+  interval       String
+  dailyChatLimit Int
+  features       String[]
+  subscriptions  Subscription[]
+  planType       PlanType       // Add this line
+}
+
 model Subscription {
   id                     String           @id @default(uuid())
   createdAt              DateTime         @default(now())
@@ -62,10 +80,10 @@ model Subscription {
   startDate              DateTime
   endDate                DateTime?
   planId                 String
+  planType               PlanType         // Add this line
   defaultPaymentMethodId String?
   email                  String
   clerkId                String
-  dailyChatLimit         Int
   user                   User             @relation(fields: [userId], references: [id])
   userId                 String           @unique
   plan                   SubscriptionPlan @relation(fields: [planId], references: [id])
@@ -73,19 +91,7 @@ model Subscription {
   @@index([clerkId, subscriptionId])
 }
 
-model SubscriptionPlan {
-  id             String         @id @default(uuid())
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  planId         String         @unique
-  name           String         @unique
-  description    String
-  amount         Decimal
-  currency       String
-  interval       String
-  dailyChatLimit Int
-  subscriptions  Subscription[]
-}
+
 
 model Payment {
   id              String   @id @default(uuid())
@@ -136,7 +142,7 @@ model Job {
 enum SubscriptionStatus {
   ACTIVE
   CANCELED
-  PAST_DUE
+  OVERDUE
   UNPAID
 }
 
@@ -157,4 +163,9 @@ enum JobType {
   ESSAY
   REPORT
   OTHER
+}
+
+enum PlanType {
+  BASIC
+  PRO
 }

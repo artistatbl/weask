@@ -9,19 +9,23 @@ type ChatError = Error & { status?: number };
 export async function getUserSubscription(userId: string) {
   const user = await prisma.user.findUnique({
     where: { clerkId: userId },
-    include: { subscription: true },
+    include: {
+      subscription: {
+        include: {
+          plan: true  // Include the related SubscriptionPlan
+        }
+      }
+    },
   });
 
-  console.log("user",user?.subscription );
+  console.log("user", user?.subscription);
 
   if (!user) {
     throw new Error("User not found");
   }
 
   return user.subscription;
-  
 }
-
 export async function incrementDailyChatCount(userId: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);

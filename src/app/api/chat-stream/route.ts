@@ -1,3 +1,5 @@
+// In src/app/api/chat-stream/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { aiUseChatAdapter } from "@upstash/rag-chat/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
@@ -47,7 +49,6 @@ export const POST = async (req: NextRequest) => {
     }
 
     const dailyLimit = plan.dailyChatLimit;
-    // console.log("dailyLimit", dailyLimit);
 
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
@@ -62,7 +63,6 @@ export const POST = async (req: NextRequest) => {
         { error: "Daily chat limit reached. Please upgrade your plan for more access." },
         { status: 429 }
       );
-      // console.log("dailyLimit reached");
     }
 
     // Apply rate limiting with retry
@@ -116,3 +116,4 @@ export const POST = async (req: NextRequest) => {
     );
   }
 };
+

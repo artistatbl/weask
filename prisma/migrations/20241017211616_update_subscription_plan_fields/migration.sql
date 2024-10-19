@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'CANCELED', 'PAST_DUE', 'UNPAID');
+CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'CANCELED', 'OVERDUE', 'UNPAID');
 
 -- CreateEnum
 CREATE TYPE "InvoiceStatus" AS ENUM ('PAID', 'UNPAID', 'VOID');
@@ -78,10 +78,12 @@ CREATE TABLE "SubscriptionPlan" (
     "planId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "amount" DECIMAL(65,30) NOT NULL,
+    "price" DECIMAL(65,30) NOT NULL,
+    "yearlyPrice" DECIMAL(65,30),
     "currency" TEXT NOT NULL,
     "interval" TEXT NOT NULL,
     "dailyChatLimit" INTEGER NOT NULL,
+    "features" TEXT[],
 
     CONSTRAINT "SubscriptionPlan_pkey" PRIMARY KEY ("id")
 );
