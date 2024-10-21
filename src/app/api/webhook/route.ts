@@ -56,6 +56,9 @@ export async function POST(req: NextRequest) {
           firstName: first_name || null,
           lastName: last_name || null,
           profileImageUrl: image_url || null,
+          dailyChatCount: 0,
+          lastChatReset: new Date(),
+
           
         },
       });

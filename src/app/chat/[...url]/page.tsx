@@ -1,13 +1,17 @@
 import { ChatWrapper } from "@/components/ChatWrapper";
 import { redis } from "@/lib/redis";
 import { cookies } from "next/headers";
-import { currentUser } from "@clerk/nextjs/server";
+// import { currentUser } from "@clerk/nextjs/server";
 import { saveSearchHistory } from "@/app/actions/chat";
-import { RedirectToSignIn } from "@clerk/nextjs";
+// import { RedirectToSignIn } from "@clerk/nextjs";
 import { prisma } from "@/lib/db";
 import { ragChat } from "@/lib/rag-chat";
 import { Message } from "@/utils/types";
 import { Prisma } from "@prisma/client";
+import { onLoginUser } from "@/app/actions/auth"; 
+import NoSubscription from "@/components/NoSubscription"; // Add this import
+
+
 
 interface PageProps {
   params: {
@@ -57,28 +61,16 @@ function generateUrlTitle(url: string): string {
 }
 
 const Page = async ({ params }: PageProps) => {
-  const user = await currentUser();
-
-  if (!user) {
-    console.log("Redirecting to sign in");
-    return <RedirectToSignIn />;
-  }
-
+  const loginResult = await onLoginUser();
   const sessionCookie = cookies().get("sessionId")?.value ?? 'default';
   const reconstructedUrl = reconstructUrl({ url: params.url as string[] });
   const sessionId = (reconstructedUrl + "--" + sessionCookie).replace(/[/:]/g, "");
 
+  let chatContent = null;
+  let noSubscriptionOverlay = null;
+
   try {
-    console.log("Checking if URL is already indexed");
     const isAlreadyIndexed = await redis.sismember("indexed-urls", reconstructedUrl) === 1;
-
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId: user.id },
-    });
-
-    if (!dbUser) {
-      return { status: 404, message: "User not found in database", messages: [] };
-    }
 
     const dbMessages = await prisma.chatMessage.findMany({
       where: { sessionId },
@@ -92,8 +84,12 @@ const Page = async ({ params }: PageProps) => {
       createdAt: msg.createdAt,
     }));
 
+    if (!loginResult.user) {
+      throw new Error("User authentication failed");
+    }
+
     const recentSearchHistories = await prisma.searchHistory.findMany({
-      where: { userId: dbUser.id },
+      where: { userId: loginResult.user.id },
       orderBy: { createdAt: 'desc' },
       take: 10,
       select: {
@@ -119,51 +115,74 @@ const Page = async ({ params }: PageProps) => {
     const recentUrls: RecentUrl[] = Array.from(normalizedUrls.values()).slice(0, 5);
 
     if (!isAlreadyIndexed) {
-      try {
-        const RagChatComponent = await ragChat;
-        if (RagChatComponent && RagChatComponent.context && RagChatComponent.context.add) {
-          await RagChatComponent.context.add({
-            type: "html",
-            source: reconstructedUrl,
-            config: { chunkOverlap: 50, chunkSize: 200 },
-          });
-          await redis.sadd("indexed-urls", reconstructedUrl);
-        } else {
-          console.error("RagChat or its context is not available");
-        }
-      } catch (error) {
-        console.error("Error during indexing:", error);
+      const RagChatComponent = await ragChat;
+      if (RagChatComponent && RagChatComponent.context && RagChatComponent.context.add) {
+        await RagChatComponent.context.add({
+          type: "html",
+          source: reconstructedUrl,
+          config: { chunkOverlap: 50, chunkSize: 200 },
+        });
+        await redis.sadd("indexed-urls", reconstructedUrl);
       }
-    } else {
     }
 
     await saveSearchHistory(reconstructedUrl, sessionId);
 
-    return (
+    chatContent = (
       <ChatWrapper
         sessionId={sessionId}
         initialMessages={initialMessages}
         isAlreadyIndexed={isAlreadyIndexed}
         recentUrls={recentUrls}
+        
       />
     );
+
+    // Check if the user has an active subscription
+    if (loginResult.status !== 200 || !loginResult.hasActiveSubscription) {
+      let message, subscriptionStatus;
+      switch (loginResult.status) {
+        case 401:
+          message = "Please sign in to access this feature.";
+          subscriptionStatus = "Not signed in";
+          break;
+        case 403:
+          message = loginResult.message;
+          subscriptionStatus = loginResult.subscriptionStatus || "No active subscription";
+          break;
+        case 404:
+          message = "User not found in database. Please contact support.";
+          subscriptionStatus = "Account issue";
+          break;
+        case 400:
+        default:
+          message = loginResult.message || "Subscription required to access this feature.";
+          subscriptionStatus = "No active subscription";
+      }
+      noSubscriptionOverlay = <NoSubscription message={message} subscriptionStatus={subscriptionStatus} />;
+    }
+
   } catch (error: unknown) {
     console.error("Error in Page component:", error);
     console.error("Error stack:", (error as Error).stack);
 
+    let errorMessage = "An unexpected error occurred. Please try again later.";
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error("Prisma error:", error.code, error.message);
-      return (
-        <div>Error with the database: {error.message}. Please try again later.</div>
-      );
+      errorMessage = `Error with the database: ${error.message}. Please try again later.`;
     } else if (error instanceof TypeError) {
-      console.error("Type error:", error.message);
-      return (
-        <div>An unexpected type error occurred: {error.message}. Please try again later.</div>
-      );
+      errorMessage = `An unexpected type error occurred: ${error.message}. Please try again later.`;
     }
-    return <div>An unexpected error occurred. Please check the server logs for more details.</div>;
+    
+    noSubscriptionOverlay = <NoSubscription message={errorMessage} subscriptionStatus="Error" />;
   }
+
+  return (
+    <>
+      {chatContent}
+      {noSubscriptionOverlay}
+    </>
+  );
 }
 
 export default Page;
+

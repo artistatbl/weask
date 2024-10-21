@@ -1,37 +1,70 @@
 "use server"
-import {prisma} from '@/lib/db';
+
+import { prisma } from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
+import { SubscriptionStatus } from '@prisma/client';
 
 export const onLoginUser = async () => {
   const user = await currentUser();
+  
   if (!user) {
-    return { status: 401 };
-  } else {
-    try {
-      const authenticated = await prisma.user.findUnique({
-        where: {
-          clerkId: user.id,
-        },
-        select: {
-          firstname: true,
-          lastname: true,
-          id: true,
-        },
-      });
+    return { status: 401, message: "Unauthorized" };
+  }
 
-      if (authenticated) {
-        // const domains = await onGetAllAccountDomains();
-        return { status: 200, user: authenticated /*, domain: domains?.domains */ };
-      } else {
-        // Handle case where user is not found in the database
-        return { status: 404, message: "User not found" };
-      }
-    } catch (error: unknown) { // Changed from any to unknown
-      if (error instanceof Error) {
-        return { status: 400, message: error.message };
-      }
-      // Handle non-Error objects
-      return { status: 400, message: 'An unknown error occurred' };
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: {
+        clerkId: user.id,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        subscription: {
+          select: {
+            status: true,
+            endDate: true,
+          },
+        },
+      },
+    });
+
+    if (!dbUser) {
+      return { status: 404, message: "User not found in database" };
     }
+
+    const hasActiveSubscription = dbUser.subscription &&
+      dbUser.subscription.status === SubscriptionStatus.ACTIVE &&
+      (dbUser.subscription.endDate === null || new Date(dbUser.subscription.endDate) > new Date());
+
+    if (!hasActiveSubscription) {
+      return { 
+        status: 403, 
+        message: "Access denied. Active subscription required.",
+        user: {
+          id: dbUser.id,
+          firstName: dbUser.firstName,
+          lastName: dbUser.lastName,
+        },
+        subscriptionStatus: dbUser.subscription?.status || null
+      };
+    }
+
+    return { 
+      status: 200, 
+      user: {
+        id: dbUser.id,
+        firstName: dbUser.firstName,
+        lastName: dbUser.lastName,
+      },
+      hasActiveSubscription: true,
+      subscriptionStatus: SubscriptionStatus.ACTIVE
+    };
+
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return { status: 400, message: error.message };
+    }
+    return { status: 400, message: 'An unknown error occurred' };
   }
 };

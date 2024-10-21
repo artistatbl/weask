@@ -21,6 +21,8 @@ model User {
   subscription     Subscription?
   chatMessages     ChatMessage[]
   searchHistories  SearchHistory[]
+ 
+
   jobs             Job[]
   dailyChatCount   Int            @default(0)
   lastChatReset    DateTime       @default(now())
@@ -80,6 +82,10 @@ model Subscription {
   startDate              DateTime
   endDate                DateTime?
   planId                 String
+  lastInvoiceId    String?
+  lastInvoiceAmount Decimal?
+  lastInvoiceDate   DateTime?
+
   planType               PlanType         // Add this line
   defaultPaymentMethodId String?
   email                  String
@@ -103,7 +109,7 @@ model Payment {
   currency        String
   clerkId         String
   customerDetails Json
-  paymentIntent   String
+  paymentIntent   String?
 
   @@index([clerkId, stripeId])
 }
@@ -112,7 +118,7 @@ model Invoice {
   id             String   @id @default(uuid())
   createdAt      DateTime @default(now())
   invoiceId      String   @unique
-  subscriptionId String
+  subscriptionId String?
   amountPaid     Decimal
   amountDue      Decimal?
   currency       String

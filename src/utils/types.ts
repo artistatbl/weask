@@ -6,6 +6,13 @@ export interface Message {
   content: string;
   createdAt?: Date;
 }
+export enum SubscriptionStatus {
+  Active = "Active",
+  Inactive = "Inactive",
+  Pending = "Pending",
+  Cancelled = "Cancelled"
+}
+
 
 export interface Links {
   label: string;

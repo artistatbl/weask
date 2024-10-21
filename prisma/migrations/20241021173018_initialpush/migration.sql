@@ -10,6 +10,9 @@ CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')
 -- CreateEnum
 CREATE TYPE "JobType" AS ENUM ('ESSAY', 'REPORT', 'OTHER');
 
+-- CreateEnum
+CREATE TYPE "PlanType" AS ENUM ('BASIC', 'PRO');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -51,26 +54,6 @@ CREATE TABLE "SearchHistory" (
 );
 
 -- CreateTable
-CREATE TABLE "Subscription" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "subscriptionId" TEXT NOT NULL,
-    "stripeUserId" TEXT NOT NULL,
-    "status" "SubscriptionStatus" NOT NULL,
-    "startDate" TIMESTAMP(3) NOT NULL,
-    "endDate" TIMESTAMP(3),
-    "planId" TEXT NOT NULL,
-    "defaultPaymentMethodId" TEXT,
-    "email" TEXT NOT NULL,
-    "clerkId" TEXT NOT NULL,
-    "dailyChatLimit" INTEGER NOT NULL,
-    "userId" TEXT NOT NULL,
-
-    CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "SubscriptionPlan" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -84,8 +67,29 @@ CREATE TABLE "SubscriptionPlan" (
     "interval" TEXT NOT NULL,
     "dailyChatLimit" INTEGER NOT NULL,
     "features" TEXT[],
+    "planType" "PlanType" NOT NULL,
 
     CONSTRAINT "SubscriptionPlan_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Subscription" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "subscriptionId" TEXT NOT NULL,
+    "stripeUserId" TEXT NOT NULL,
+    "status" "SubscriptionStatus" NOT NULL,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3),
+    "planId" TEXT NOT NULL,
+    "planType" "PlanType" NOT NULL,
+    "defaultPaymentMethodId" TEXT,
+    "email" TEXT NOT NULL,
+    "clerkId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -99,7 +103,7 @@ CREATE TABLE "Payment" (
     "currency" TEXT NOT NULL,
     "clerkId" TEXT NOT NULL,
     "customerDetails" JSONB NOT NULL,
-    "paymentIntent" TEXT NOT NULL,
+    "paymentIntent" TEXT,
 
     CONSTRAINT "Payment_pkey" PRIMARY KEY ("id")
 );
@@ -154,6 +158,12 @@ CREATE INDEX "SearchHistory_userId_domain_idx" ON "SearchHistory"("userId", "dom
 CREATE UNIQUE INDEX "SearchHistory_userId_sessionId_domain_key" ON "SearchHistory"("userId", "sessionId", "domain");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "SubscriptionPlan_planId_key" ON "SubscriptionPlan"("planId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SubscriptionPlan_name_key" ON "SubscriptionPlan"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Subscription_subscriptionId_key" ON "Subscription"("subscriptionId");
 
 -- CreateIndex
@@ -161,12 +171,6 @@ CREATE UNIQUE INDEX "Subscription_userId_key" ON "Subscription"("userId");
 
 -- CreateIndex
 CREATE INDEX "Subscription_clerkId_subscriptionId_idx" ON "Subscription"("clerkId", "subscriptionId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "SubscriptionPlan_planId_key" ON "SubscriptionPlan"("planId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "SubscriptionPlan_name_key" ON "SubscriptionPlan"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Payment_stripeId_key" ON "Payment"("stripeId");

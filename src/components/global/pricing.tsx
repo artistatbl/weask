@@ -1,19 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState , useEffect} from 'react'
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Stripe, loadStripe } from '@stripe/stripe-js'
+import { useUser } from "@clerk/nextjs"
+import axios from "axios"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+
 
 type Plan = {
   title: string;
-  monthlyPrice?: number;
-  yearlyPrice?: number;
-  price?: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
   features: string[];
   buttonLink: string;
   description: string;
   isFeatured?: boolean;
+  stripePriceIdMonthly: string;
+  stripePriceIdYearly: string;
 };
 
 const plans: Plan[] = [
@@ -27,7 +34,9 @@ const plans: Plan[] = [
       "Email support",
     ],
     buttonLink: "/sign-up?plan=basic",
-    description: "Perfect for getting started with QuillMinds"
+    description: "Perfect for getting started with QuillMinds",
+    stripePriceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID || '',
+    stripePriceIdYearly: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || '',
   },
   {
     title: "Pro Plan",
@@ -42,13 +51,71 @@ const plans: Plan[] = [
     ],
     buttonLink: "/sign-up?plan=pro",
     description: "For educators who want more from QuillMinds",
-    isFeatured: true
+    isFeatured: true,
+    stripePriceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID2 || '',
+    stripePriceIdYearly: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID2 || '',
   },
-
 ]
 
 export default function Pricing() {
   const [isYearly, setIsYearly] = useState(false)
+  const { isSignedIn, user } = useUser()
+  const router = useRouter()
+
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
+
+  useEffect(() => {
+    setStripePromise(loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!))
+  }, [])
+
+
+  const handleCheckout = async (plan: Plan) => {
+    if (!isSignedIn) {
+      toast.info("Please login or sign up to purchase", {
+        action: {
+          label: "Sign Up",
+          onClick: () => router.push("/sign-up"),
+
+        },
+      })
+      return
+    }
+
+    const priceId = isYearly ? plan.stripePriceIdYearly : plan.stripePriceIdMonthly
+
+    try {
+      const response = await axios.post('/api/payment/checkout-session', {
+        priceId: priceId,
+        // priceId: isYearly ? plan.yearlyPriceId : plan.monthlyPriceId,
+
+        userId: user?.id,
+        email: user?.primaryEmailAddress?.emailAddress,
+      })
+
+      if (response.data.sessionId) {
+        const stripe = await stripePromise
+        const { error } = await stripe!.redirectToCheckout({
+          sessionId: response.data.sessionId,
+        })
+
+        if (error) {
+          console.error('Stripe checkout error:', error)
+          toast.error('An error occurred. Please try again.')
+        }
+      } else {
+        console.error('Failed to create checkout session', response.data)
+        toast.error('Failed to create checkout session')
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        console.error('Error during checkout:', error.response.data)
+        toast.error(`Error during checkout: ${error.response.data.error || 'Unknown error'}`)
+      } else {
+        console.error('Error during checkout:', error)
+        toast.error('Error during checkout')
+      }
+    }
+  }
 
   return (
     <section className="overflow-hidden bg-white" id="pricing">
@@ -77,12 +144,10 @@ export default function Pricing() {
         <div className="grid gap-8 lg:grid-cols-2">
           {plans.map((plan) => (
             <PricingCard
-            
               key={plan.title}
-              {...plan}
-              price={typeof plan.price === 'string' ? plan.price : 
-                (isYearly ? plan.yearlyPrice : plan.monthlyPrice)}
-              billingPeriod={isYearly ? '/year' : '/month'}
+              plan={plan}
+              isYearly={isYearly}
+              onCheckout={() => handleCheckout(plan)}
             />
           ))}
         </div>
@@ -92,25 +157,20 @@ export default function Pricing() {
 }
 
 function PricingCard({
-  title,
-  price,
-  features,
-  isFeatured,
-  description,
-  billingPeriod,
- // buttonLink,
+  plan,
+  isYearly,
+  onCheckout,
 }: {
-  title: string;
-  price: number | string | undefined;
-  features: string[];
-  buttonLink: string;
-  isFeatured?: boolean;
-  description: string;
-  billingPeriod: string;
+  plan: Plan;
+  isYearly: boolean;
+  onCheckout: () => void;
 }) {
+  const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice
+  const period = isYearly ? '/year' : '/month'
+
   return (
-    <div className={`relative w-full ${isFeatured ? 'lg:-mt-4' : ''}`}>
-      {isFeatured && (
+    <div className={`relative w-full ${plan.isFeatured ? 'lg:-mt-4' : ''}`}>
+      {plan.isFeatured && (
         <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
           <span className="whitespace-nowrap rounded-full bg-orange-500 px-2 py-1 text-xs font-semibold text-white">
             MOST POPULAR
@@ -119,28 +179,26 @@ function PricingCard({
       )}
       <div
         className={`relative z-10 h-full rounded-lg ${
-          isFeatured ? 'ring-2 ring-orange-500' : 'border border-zinc-400'
+          plan.isFeatured ? 'ring-2 ring-orange-500' : 'border border-zinc-400'
         }`}
       >
         <div className="flex h-full flex-col gap-5 rounded-lg bg-white p-8 lg:gap-8">
           <div>
-            <h3 className="mb-2 text-xl font-bold text-slate-800">{title}</h3>
-            <p className="text-sm text-slate-600">{description}</p>
+            <h3 className="mb-2 text-xl font-bold text-slate-800">{plan.title}</h3>
+            <p className="text-sm text-slate-600">{plan.description}</p>
           </div>
           <div className="flex flex-wrap items-end gap-2">
             <p className="text-5xl font-black tracking-tight text-slate-800">
-              {typeof price === 'number' ? `$${price.toFixed(2)}` : price}
+              ${price.toFixed(2)}
             </p>
-            {typeof price === 'number' && (
-              <div className="mb-[4px] flex flex-col justify-end">
-                <p className="text-xs font-semibold uppercase text-slate-500">
-                  USD {billingPeriod}
-                </p>
-              </div>
-            )}
+            <div className="mb-[4px] flex flex-col justify-end">
+              <p className="text-xs font-semibold uppercase text-slate-500">
+                USD {period}
+              </p>
+            </div>
           </div>
           <ul className="flex-1 space-y-2.5 text-base leading-relaxed text-slate-700">
-            {features.map((feature, index) => (
+            {plan.features.map((feature, index) => (
               <li key={index} className="flex items-center gap-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -159,8 +217,12 @@ function PricingCard({
             ))}
           </ul>
           <div className="space-y-2">
-            <Button variant={isFeatured ? "default" : "outline"} className="w-full">
-              {title === "Enterprise Plan" ? "Contact Sales" : "Get Started"}
+            <Button 
+              variant={plan.isFeatured ? "default" : "outline"} 
+              className="w-full"
+              onClick={onCheckout}
+            >
+              Get Started
             </Button>
           </div>
         </div>

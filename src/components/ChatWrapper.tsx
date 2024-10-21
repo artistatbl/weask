@@ -132,6 +132,7 @@ export const ChatWrapper: FC<ChatWrapperProps> = ({ sessionId, initialMessages, 
                 input={input}
                 handleInputChange={handleInputChange}
                 handleSubmit={handleChatSubmit}
+              
                 setInput={setInput}
                 isLoading={isChatLoading}
                 isDisabled={isDailyLimitReached}
