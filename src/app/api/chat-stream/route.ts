@@ -5,7 +5,9 @@ import { aiUseChatAdapter } from "@upstash/rag-chat/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { processChatStream } from "@/lib/chatStreamLogic";
 import { ratelimitConfig } from "@/lib/rateLimiter";
-import { getUserSubscription, incrementDailyChatCount } from "@/app/actions/chat";
+import { incrementDailyChatCount } from "@/app/actions/chat";
+import { getUserSubscription } from "@/app/actions/user";
+
 import { prisma } from "@/lib/db";
 
 const MAX_RETRIES = 3;
@@ -34,7 +36,7 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Fetch user subscription and associated plan
-    const subscription = await getUserSubscription(user.id);
+    const subscription = await getUserSubscription();
     if (!subscription) {
       return NextResponse.json({ error: "No active subscription found" }, { status: 403 });
     }

@@ -129,13 +129,18 @@ const Page = async ({ params }: PageProps) => {
     await saveSearchHistory(reconstructedUrl, sessionId);
 
     chatContent = (
+      <>
       <ChatWrapper
         sessionId={sessionId}
         initialMessages={initialMessages}
         isAlreadyIndexed={isAlreadyIndexed}
         recentUrls={recentUrls}
         
-      />
+        />
+       
+        </>
+
+  
     );
 
     // Check if the user has an active subscription

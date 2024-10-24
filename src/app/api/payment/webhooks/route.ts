@@ -40,6 +40,7 @@ async function getCustomerEmail(customerId: string): Promise<string | null> {
   }
 }
 
+
 async function handleSubscriptionEvent(
   event: Stripe.Event,
   type: "created" | "updated" | "deleted"
@@ -59,7 +60,6 @@ async function handleSubscriptionEvent(
       });
     }
 
-    // Find the user and their current subscription (if any)
     const user = await prisma.user.findUnique({
       where: { email: customerEmail },
       include: { subscription: true },
@@ -85,44 +85,37 @@ async function handleSubscriptionEvent(
     }
 
     const price = await stripe.prices.retrieve(priceId);
-    console.log('Stripe Price:', JSON.stringify(price, null, 2));
+    const subscriptionPlan = await upsertSubscriptionPlan(price);
 
-    const subscriptionPlan = await prisma.subscriptionPlan.upsert({
-      where: { planId: priceId },
-      update: {
-        name: price.nickname || 'Default Plan Name',
-        description: 'Plan description',
-        price: new Prisma.Decimal(price.unit_amount! / 100),
-        currency: price.currency,
-        interval: price.recurring?.interval || 'month',
-        ...(price.metadata?.dailyChatLimit && { dailyChatLimit: parseInt(price.metadata.dailyChatLimit) }),
-        ...(price.metadata?.features && { features: JSON.parse(price.metadata.features) }),
-        ...(price.metadata?.planType && { planType: price.metadata.planType as PlanType }),
+    // Check for recent paid invoices
+    const recentPaidInvoice = await prisma.invoice.findFirst({
+      where: {
+        subscriptionId: subscription.id,
+        status: InvoiceStatus.PAID,
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Check last 24 hours
+        }
       },
-      create: {
-        planId: priceId,
-        name: price.nickname || 'Default Plan Name',
-        description: 'Plan description',
-        price: new Prisma.Decimal(price.unit_amount! / 100),
-        currency: price.currency,
-        interval: price.recurring?.interval || 'month',
-        dailyChatLimit: price.metadata?.dailyChatLimit ? parseInt(price.metadata.dailyChatLimit) : 100,
-        features: price.metadata?.features ? JSON.parse(price.metadata.features) : [],
-        planType: (price.metadata?.planType as PlanType) || PlanType.BASIC,
-      },
+      orderBy: { createdAt: 'desc' }
     });
-    console.log('SubscriptionPlan upserted:', subscriptionPlan);
 
-    // Prepare subscription data
+    // Determine the correct status
+    let subscriptionStatus: SubscriptionStatus;
+    if (recentPaidInvoice) {
+      subscriptionStatus = SubscriptionStatus.ACTIVE;
+    } else {
+      subscriptionStatus = mapSubscriptionStatus(subscription.status);
+    }
+
     const subscriptionData = {
       subscriptionId: subscription.id,
       stripeUserId: subscription.customer as string,
-      status: mapSubscriptionStatus(subscription.status),
+      status: subscriptionStatus,
       startDate: new Date(subscription.current_period_start * 1000),
       endDate: new Date(subscription.current_period_end * 1000),
       planType: subscriptionPlan.planType,
       email: customerEmail,
-      clerkId: subscription.metadata?.userId || "",
+      clerkId: subscription.metadata?.userId,
       plan: { connect: { id: subscriptionPlan.id } },
     };
 
@@ -130,7 +123,6 @@ async function handleSubscriptionEvent(
 
     if (type === "deleted") {
       if (user.subscription) {
-        // For deleted subscriptions, update the status to CANCELED
         updatedSubscription = await prisma.subscription.update({
           where: { id: user.subscription.id },
           data: { status: SubscriptionStatus.CANCELED },
@@ -140,14 +132,13 @@ async function handleSubscriptionEvent(
         console.log(`No active subscription found for user ${user.id} to cancel`);
       }
     } else {
-      // For created or updated subscriptions
       if (user.subscription) {
         // Update existing subscription
         updatedSubscription = await prisma.subscription.update({
           where: { id: user.subscription.id },
           data: subscriptionData,
         });
-        console.log(`Existing subscription ${subscription.id} updated`);
+        console.log(`Existing subscription ${subscription.id} updated. New status: ${updatedSubscription.status}`);
       } else {
         // Create new subscription
         updatedSubscription = await prisma.subscription.create({
@@ -156,11 +147,11 @@ async function handleSubscriptionEvent(
             user: { connect: { id: user.id } },
           },
         });
-        console.log(`New subscription ${subscription.id} created`);
+        console.log(`New subscription ${subscription.id} created with status ${updatedSubscription.status}`);
       }
     }
 
-    console.log(`Subscription ${type} processed. Status: ${updatedSubscription?.status || 'N/A'}`);
+    console.log(`Subscription ${type} processed. Final Status: ${updatedSubscription?.status || 'N/A'}`);
 
     return NextResponse.json({
       status: 200,
@@ -178,6 +169,117 @@ async function handleSubscriptionEvent(
     });
   }
 }
+// Helper function to upsert SubscriptionPlan
+// Helper function to determine plan type and features based on price
+
+function getPlanDetails(price: Stripe.Price): {
+  name: string;
+  description: string;
+  planType: PlanType;
+  features: string[];
+  dailyChatLimit: number;
+} {
+  const priceAmount = new Prisma.Decimal(price.unit_amount! / 100).toString();
+  const currency = price.currency.toUpperCase();
+  const interval = price.recurring?.interval || 'month';
+  const planType = (price.metadata?.planType as PlanType) || PlanType.BASIC;
+  const intervalText = interval === 'year' ? 'year' : 'month';
+  const intervalSuffix = interval === 'year' ? '/year' : '/month';
+
+  switch (planType) {
+    case PlanType.BASIC:
+      return {
+        name: price.nickname || `Basic Plan (${priceAmount} ${currency}${intervalSuffix})`,
+        description: `Get started with our Basic plan, billed ${intervalText}ly. Perfect for regular users who want access to essential AI chat features.`,
+        planType: PlanType.BASIC,
+        features: [
+          "100 messages per day",
+          "Standard response time",
+          "Basic conversation history",
+          "Email support",
+          "Regular model updates",
+          `Billed ${intervalText}ly`
+        ],
+        dailyChatLimit: 100
+      };
+
+    case PlanType.PRO:
+      return {
+        name: price.nickname || `Pro Plan (${priceAmount} ${currency}${intervalSuffix})`,
+        description: `Upgrade to Pro, billed ${intervalText}ly. Ideal for power users and professionals who need unlimited access and advanced features.`,
+        planType: PlanType.PRO,
+        features: [
+          "Unlimited daily messages",
+          "Priority response time",
+          "Full conversation history",
+          "Priority support",
+          "Advanced AI capabilities",
+          "Early access to new features",
+          `Billed ${intervalText}ly`
+        ],
+        dailyChatLimit: 200
+      };
+
+    default:
+      return {
+        name: price.nickname || `Basic Plan (${priceAmount} ${currency}${intervalSuffix})`,
+        description: `Get started with our Basic plan, billed ${intervalText}ly. Perfect for regular users who want access to essential AI chat features.`,
+        planType: PlanType.BASIC,
+        features: [
+          "100 messages per day",
+          "Standard response time",
+          "Basic conversation history",
+          "Email support",
+          "Regular model updates",
+          `Billed ${intervalText}ly`
+        ],
+        dailyChatLimit: 100
+      };
+  }
+}
+
+async function upsertSubscriptionPlan(price: Stripe.Price) {
+  const planDetails = getPlanDetails(price);
+  const interval = price.recurring?.interval || 'month';
+  
+  // Base update/create data without the optional prices
+  const baseData = {
+    name: planDetails.name,
+    description: planDetails.description,
+    price: new Prisma.Decimal(price.unit_amount! / 100),
+    currency: price.currency,
+    interval: interval,
+    dailyChatLimit: planDetails.dailyChatLimit,
+    features: planDetails.features,
+    planType: planDetails.planType,
+  };
+
+  // Only add yearlyPrice if it's a monthly plan
+  const yearlyPrice = interval === 'month'
+    ? { yearlyPrice: new Prisma.Decimal(price.unit_amount! * 12 / 100) }
+    : {};
+
+  // Only add monthlyPrice if it's a yearly plan
+  const monthlyPrice = interval === 'year'
+    ? { monthlyPrice: new Prisma.Decimal(price.unit_amount! / 12 / 100) }
+    : {};
+
+  return prisma.subscriptionPlan.upsert({
+    where: { planId: price.id },
+    update: {
+      ...baseData,
+      ...yearlyPrice,
+      ...monthlyPrice,
+    },
+    create: {
+      planId: price.id,
+      ...baseData,
+      ...yearlyPrice,
+      ...monthlyPrice,
+    },
+  });
+}
+
 
 
 async function handleInvoiceEvent(
@@ -194,8 +296,6 @@ async function handleInvoiceEvent(
 
     if (!invoice.subscription) {
       console.warn(`Invoice ${invoice.id} is not associated with a subscription. This is unexpected for our business model.`);
-      // Depending on your business logic, you might want to handle this case differently
-      // For now, we'll log a warning and return without creating an invoice in our system
       return NextResponse.json({
         status: 200,
         message: `Skipped processing non-subscription invoice ${invoice.id}`,
@@ -219,7 +319,14 @@ async function handleInvoiceEvent(
     const createdInvoice = await prisma.invoice.create({ data: invoiceData });
     console.log('Created invoice in database:', JSON.stringify(createdInvoice, null, 2));
 
-    if (status === "failed") {
+    // Update the subscription status if the invoice payment succeeded
+    if (status === "succeeded") {
+      const updatedSubscription = await prisma.subscription.update({
+        where: { subscriptionId: invoice.subscription as string },
+        data: { status: SubscriptionStatus.ACTIVE },
+      });
+      console.log(`Updated subscription ${updatedSubscription.id} to ACTIVE status`);
+    } else if (status === "failed") {
       await handleFailedPayment(invoice);
     }
 
@@ -240,7 +347,6 @@ async function handleInvoiceEvent(
     });
   }
 }
-
   async function handleSubscriptionUpdated(event: Stripe.Event) {
     const subscription = event.data.object as Stripe.Subscription;
     const subscriptionStatus = mapSubscriptionStatus(subscription.status);
@@ -333,7 +439,7 @@ async function handleInvoiceEvent(
       const subscriptionPlan = await prisma.subscriptionPlan.upsert({
         where: { planId: price.id },
         update: {
-          name: price.nickname || 'Default Plan Name',
+          name: price.nickname || '',
           description: 'Plan description',
           price: new Prisma.Decimal(price.unit_amount! / 100),
           currency: price.currency,
@@ -344,7 +450,7 @@ async function handleInvoiceEvent(
         },
         create: {
           planId: price.id,
-          name: price.nickname || 'Default Plan Name',
+          name: price.nickname || '',
           description: 'Plan description',
           price: new Prisma.Decimal(price.unit_amount! / 100),
           currency: price.currency,
@@ -368,13 +474,12 @@ async function handleInvoiceEvent(
   
         const subscriptionData = {
           subscriptionId: subscriptionId,
-         // customerId: stripeSubscription.customer,
-          status: mapSubscriptionStatus(stripeSubscription.status),
+          stripeUserId: session.customer as string,
+          status: mapSubscriptionStatus(stripeSubscription.status), // Use the actual status from Stripe
+
           startDate: new Date(stripeSubscription.current_period_start * 1000),
           endDate: new Date(stripeSubscription.current_period_end * 1000),
           planType: subscriptionPlan.planType,
-          stripeUserId: session.customer as string,
-         
           email: user.email,
           clerkId: user.clerkId,
         };
@@ -388,7 +493,7 @@ async function handleInvoiceEvent(
               plan: { connect: { id: subscriptionPlan.id } },
             },
           });
-          console.log(`Existing subscription ${subscriptionId} updated. New status: ${subscription.status}`);
+          console.log(`Existing subscription ${subscriptionId} updated and set to ACTIVE`);
         } else {
           subscription = await prisma.subscription.create({
             data: {
@@ -397,7 +502,7 @@ async function handleInvoiceEvent(
               plan: { connect: { id: subscriptionPlan.id } },
             },
           });
-          console.log(`New subscription ${subscriptionId} created with status: ${subscription.status}`);
+          console.log(`New subscription ${subscriptionId} created with status ACTIVE`);
         }
   
         const payment = await prisma.payment.create({
@@ -420,7 +525,7 @@ async function handleInvoiceEvent(
   
       return NextResponse.json({
         status: 200,
-        message: "Subscription and payment recorded successfully",
+        message: "Subscription activated and payment recorded successfully",
       });
     } catch (error) {
       console.error("Error handling checkout session:", error);

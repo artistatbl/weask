@@ -1,4 +1,3 @@
-"use client"
 import React from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
 import {
@@ -10,6 +9,7 @@ import { motion } from "framer-motion";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CreditCard, Info } from "lucide-react";
 
 interface RecentUrl {
   id: string;
@@ -24,6 +24,8 @@ interface HomeSidebarProps {
 
 export function HomeSidebar({ recentUrls }: HomeSidebarProps) {
   const [open, setOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  //const [portalUrl, setPortalUrl] = React.useState<string | null>(null);
   const { user } = useUser();
   const [isClient, setIsClient] = React.useState(false);
 
@@ -44,9 +46,37 @@ export function HomeSidebar({ recentUrls }: HomeSidebarProps) {
     }, 1000);
   };
 
+  const handleBillingPortal = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/payment/portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.error) {
+        console.error('Portal error:', data.error);
+        toast.error(data.error);
+      }
+    } catch (error) {
+      console.error('Failed to access portal:', error);
+      toast.error('Failed to access billing portal');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     if (isClient) {
-      // Example usage of isClient
       console.log("Client is active");
     }
   });
@@ -62,7 +92,7 @@ export function HomeSidebar({ recentUrls }: HomeSidebarProps) {
                 link={{
                   textColor: "text-orange-500",
                   label: "New Chat",
-                  href: "#",
+                  href: "/dashboard",
                   icon: (
                     <IconBrandTabler className="text-orange-600 h-5 w-5 flex-shrink-0" />
                   ),
@@ -102,7 +132,22 @@ export function HomeSidebar({ recentUrls }: HomeSidebarProps) {
                   label: fullName,
                   href: "#",
                   icon: (
-                    <UserButton/>
+                    <UserButton>
+                    <UserButton.MenuItems>
+                      <UserButton.Action 
+                        label={isLoading ? "Loading..." : "Billing"}
+                        labelIcon={<CreditCard size={14} />}
+                        onClick={handleBillingPortal}
+                      />
+                      <UserButton.Action 
+                        label="Help & Support"
+                        labelIcon={<Info size={14} />}
+                        onClick={() => router.push('/help')}
+                      />
+                    </UserButton.MenuItems>
+                  
+                  
+                  </UserButton>
                   ),
                 }}
               />

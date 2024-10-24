@@ -27,6 +27,7 @@ const config = {
   		colors: {
   			bg: '#E0E7F1',
   			main: '#A3E636',
+			skeleton: 'rgb(82 82 91)',
   			mainAccent: '#4d80e6',
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',

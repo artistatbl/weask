@@ -43,7 +43,7 @@ export default function Faq() {
   ];
 
   return (
-    <div className="w-full bg-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="w-full bg-white py-12 px-4 sm:px-6 lg:px-8" id="faq">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col items-center text-center lg:flex-row lg:items-start lg:text-left gap-8">
           <div className="lg:w-1/3">

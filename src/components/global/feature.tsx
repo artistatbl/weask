@@ -49,7 +49,7 @@ export default function Feature() {
   const [activeFeature, setActiveFeature] = useState("ai-lesson")
 
   return (
-    <section className="bg-white py-24">
+    <section className="bg-white py-24" id="features">
       <div className="container mx-auto px-4">
         <h2 className="mb-12 text-center text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
           AI-powered lesson preparation

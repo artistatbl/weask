@@ -64,6 +64,7 @@ model SubscriptionPlan {
   description    String
   price          Decimal
   yearlyPrice    Decimal?
+  montlyPrice    Decimal?
   currency       String
   interval       String
   dailyChatLimit Int
